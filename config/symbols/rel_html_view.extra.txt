@@ -1,0 +1,27 @@
+// Hand-written symbol names for rel_html_view — merged into the generated
+// rel_html_view.txt by scripts/resolve_nids.py, which never overwrites this file.
+//
+// Convention: s_ = read-only string constant in .data, g_ = mutable global.
+// splat parses everything after `//` on a symbol line as attributes, so any
+// description has to go on its own comment line above the symbol, and `type:`
+// only accepts its own vocabulary (asciz/u32/s32/... — there is no `data`).
+
+// "http://www.konami.jp/gs/game/yugioh_tf5/dl/eu.php"
+s_download_url = 0x00005E4C; // type:asciz size:0x34
+// "/PSP/SAVEDATA/"
+s_savedata_dir = 0x00005E80; // type:asciz size:0x20
+
+// 3rd argument of the module-registration call in func_00000000
+g_module_reg = 0x00005EA0; // size:0xC
+// state machine word, 1..4 (func_00000670)
+g_state = 0x00005EAC; // type:s32 size:0x4
+// SceUtilityHtmlViewerParam, built by func_00000470
+g_html_param = 0x00005EB0; // size:0xA8
+// initialurl/homeurl text, built by func_00000414
+g_url_buf = 0x00005F68; // size:0x200
+// dldirname text, built by func_00000420
+g_dl_dir_buf = 0x00006168; // size:0x84
+// points at g_heap; set by func_00000650
+g_heap_ptr = 0x000061EC; // type:u32 size:0x4
+// the 6 MB block passed as param.memaddr
+g_heap = 0x000061F0;

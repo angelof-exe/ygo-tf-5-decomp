@@ -65,7 +65,12 @@ def parse_target(path):
                 symm = re.search(r"%lo\((\w+)\)", operands)
                 if symm:
                     sym, kind = symm.group(1), "LO16"
-                elif mnem in ("jal", "j", "b") and re.match(r"^func_[0-9A-Fa-f]+$", operands.strip()):
+                elif mnem in ("jal", "j", "b") and re.match(r"^[A-Za-z_]\w*$", operands.strip()) \
+                        and not operands.strip().startswith(".L"):
+                    # any identifier, not just func_XXXXXXXX: since
+                    # scripts/resolve_nids.py wired config/symbols/*.txt into the
+                    # splat configs, the target's calls are named imports
+                    # (sceHttpInit, ehsys_memset, cardalbum_1A2B3C4D).
                     sym, kind = operands.strip(), "26"
             funcs[cur].append((word, mnem, operands.strip(), sym, kind))
     return funcs

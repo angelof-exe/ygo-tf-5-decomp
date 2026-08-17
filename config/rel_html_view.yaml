@@ -1,0 +1,68 @@
+# splat config for rel_html_view.prx (26 KB) — full file coverage.
+#
+# Same shape as config/rel_movie_viewer.yaml (read its header comments first:
+# they explain the linker-script ordering gotcha and the vram numbering rule,
+# both of which apply identically here). Only the byte offsets differ.
+#
+# Real section layout (`readelf -SW`, file offsets = section "Off" column):
+#
+#   0x0000-0x0054  ELF header + program headers        (not a section)
+#   0x0054-0x07B4  .text                   (0x760)      <- code to decompile
+#   0x07B4-0x3E74  .sceStub.text           (0x36C0)     import-stub trampolines
+#   0x3E74-0x3F48  .lib.ent.top/.lib.ent/.lib.ent.btm/.lib.stub.top/.lib.stub/.lib.stub.btm
+#   0x3F48-0x4018  .rodata.sceModuleInfo (0x34) + .rodata.sceResident (0x9C)
+#   0x4018-0x5E78  .rodata.sceNid          (0x1E60)     NID table for imported SDK functions
+#   0x5E78-0x5EF4  .data                   (0x7C)       (.rodata.sceVstub is zero-size, same addr)
+#   0x5EF4-0x6914  section header table + all .rel.* (PT_SCE_PSPREL) + .shstrtab + .comment
+#   (.bss is NOBITS, zero size here, occupies no file space)
+#
+# Verified: the ranges above sum to 0x6914 == 26900 == the file's exact size,
+# and the sha1 below matches checksums.sha1.
+#
+# .text is 0x760 bytes / ~15 functions — the smallest module in the game,
+# smaller than rel_movie_viewer's 0x8B4 despite the larger file (bigger NID
+# table).
+
+name: rel_html_view
+sha1: 57fbdafb2277acbb1093bb9c466515cc7e846096
+options:
+  platform: psp
+  basename: rel_html_view
+  base_path: ..
+  target_path: iso_extracted/PSP_GAME/USRDIR/gmodule/rel_html_view.prx
+  asm_path: asm/rel_html_view
+  asset_path: assets/rel_html_view   # per-module, or all 28 overwrite each other
+  ld_script_path: build/rel_html_view.ld
+  symbol_addrs_path: config/symbols/rel_html_view.txt   # import stub names (scripts/resolve_nids.py)
+  compiler: GCC          # placeholder to drive the disassembler; the game uses MWCC (see docs/06)
+  find_file_boundaries: True
+  add_set_gp_64: False   # Allegrex is 32-bit; `.set gp=64` makes gas reject -march=mips32r2
+  ld_align_section_vram_end: False   # a 16-byte ALIGN between blocks shifts everything after .text
+  ld_align_segment_vram_end: False
+  emit_subalign: False   # SUBALIGN(16) would pad every blob and change the file size
+  section_order: [".text", ".data", ".rodata", ".bss"]
+
+# `header` must stay its OWN top-level segment placed before the code segment,
+# otherwise splat's linker-script generator groups it into the DATA block and
+# emits it after .text (see rel_movie_viewer.yaml for the full explanation).
+#
+# vram baseline: 0x0 == file offset 0x54, so `func_XXXXXXXX` / `D_XXXXXXXX`
+# names are "byte offset from the start of the code segment". .text and
+# .sceStub.text must stay in ONE contiguous code segment (the real PRX puts
+# .sceStub.text at addr 0x760, immediately after .text, so this is exact).
+segments:
+  - [0x0, bin, header]   # ELF header + program headers, file 0x0-0x54 (not loaded code)
+  - name: rel_html_view
+    type: code
+    start: 0x54
+    vram: 0x0
+    subsegments:
+      - [0x54,   asm, text]          # vram 0x0000-0x0760: real .text, this is what we decompile/match
+      - [0x7B4,  asm, sceStub_text]  # vram 0x0760-0x3E20: import-stub trampolines (jal-only bodies,
+                                     # compiler/linker-generated; disassembled for labels/xrefs, not hand-matched)
+      - [0x3E74, bin, lib_tables]    # .lib.ent*/.lib.stub* export+import tables
+      - [0x3F48, bin, module_info]   # .rodata.sceModuleInfo + .rodata.sceResident
+      - [0x4018, bin, sceNid]        # .rodata.sceNid: NID table for imported SDK functions
+      - [0x5E78, bin, data]          # .data
+      - [0x5EF4, bin, elf_meta]      # section header table + all .rel.* + .shstrtab + .comment
+  - [0x6914]   # sentinel: total file size
