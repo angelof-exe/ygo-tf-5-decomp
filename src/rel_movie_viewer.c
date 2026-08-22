@@ -11,6 +11,14 @@
  *               immediate. Only functions marked "MATCH 100%" below have been
  *               confirmed this way; 15/16 functions in this file currently are.
  *
+ * IMPORTS ARE NAMED (docs/nids/README.md). Every call out of this module is
+ * now a resolved name rather than a stub address, and those names are shared
+ * with all 27 other modules: ehsys_B4471B5E (the module-registration call that
+ * opens every module), ehsys_memset, ehsys_strcpy, ehsys_strcat,
+ * ehsys_strlen, and sceIoDopen/sceIoDread/sceIoDclose — which confirm that
+ * func_000006BC really is a directory walk. Six of these names also appear in
+ * src/rel_html_view.c, spelled identically.
+ *
  * Conventions (see docs/09-first-match.md):
  *  - global game-state variables are `volatile` and are accessed via a local
  *    pointer to reproduce the original codegen (value reload, use of $s0);
@@ -74,14 +82,14 @@
  * CAUTION on "the compiler just allocates registers differently" diagnoses:
  * func_000007C8 was documented as exactly that (`$a0` vs `$a1` for the
  * copy-loop pointer) and it was NOT — the leading parameter had been typed as
- * unused when the target actually forwards it into func_00000EB4, so $a0 was
+ * unused when the target actually forwards it into ehsys_CABEA834, so $a0 was
  * never free to begin with. Fixing the dataflow matched the function outright.
  * An "unused" leading parameter that the target never writes before a call is
  * a strong hint that the parameter is being passed straight through.
  *
  * Layout notes discovered while drafting (see asm/rel_movie_viewer/text.s):
  *  - D_0009DB00 is the start of a much larger state blob. func_00000138
- *    zero-fills it with size 0x653C via func_00001D7C(&D_0009DB00, 0, 0x653C),
+ *    zero-fills it with size 0x653C via ehsys_memset(&D_0009DB00, 0, 0x653C),
  *    which is exactly (last known field 0x6538) + 4 — i.e. 0x653C is very
  *    likely the blob's real size.
  *  - D_000A3F0C (referenced directly elsewhere via its own %hi/%lo symbol)
@@ -99,17 +107,8 @@
  */
 
 extern volatile int D_0009DB00;
-extern void func_00000CEC(int);
+extern void ehsys_1078C73B(int);
 
-/* func_00000184 — "release-and-clear" cleanup of a global handle.
- * MATCH 100% (mwccpsp_3.0.1_219, -O4,s -sdatathreshold 0). */
-void func_00000184(void) {
-    volatile int *p = &D_0009DB00;
-    if (*p != 0) {
-        func_00000CEC(*p);
-        *p = 0;
-    }
-}
 
 /* ============================================================
  * Remaining functions of the module. Each is individually tagged
@@ -120,42 +119,42 @@ void func_00000184(void) {
 /* externs used by the drafts (types are best-effort guesses from usage,
  * to be corrected once matched or once the modules they live in are
  * decompiled) */
-extern void func_000008B4(void (*)(void), void (*)(void), void *);
-extern void func_000008CC(int, void (*)(void), void (*)(void));
-extern int func_00000924(int);
-extern int func_00000CE4(void *, int);
-extern void *func_00000D74(void);
-extern int func_00000DA4(int, int);
-extern void func_00000DAC(int);
-extern int func_00000EB4(void *, int);
-extern int func_00000EFC(int, int, int);
-extern void func_00001694(void *, int, int);
-extern void func_0000169C(void *, void *);
-extern int func_000016A4(void *);
-extern void func_000016C4(void *);
-extern void func_0000175C(int);
-extern void func_0000180C(void);
-extern void func_00001A2C(int, int);
-extern void func_00001A5C(void *, int);
-extern void func_00001B8C(int, int);
-extern void func_00001D7C(void *, int, int);
-extern void func_00001DBC(void *, void *);
-extern void func_00001DCC(void *, void *);
-extern int func_00001DE4(void *);
-extern int func_00002224(void);
-extern void func_0000222C(int);
-extern int func_00002234(int, void *);
-extern void func_00002DEC(int, int);
-extern int func_00002DF4(void);
-extern void func_00002DFC(void *, int);
-extern void func_00002E0C(void);
-extern void func_00002E94(int, int, void *);
-extern void func_00002EB4(int, int);
-extern void func_00002EC4(int);
-extern void func_00002EE4(int, int, int, void *);
-extern void func_00002F94(int);
-extern void func_00002F9C(void);
-extern void func_00002FD4(void);
+extern void ehsys_B4471B5E(void (*)(void), void (*)(void), void *);
+extern void ehsys_C2E59A21(int, void (*)(void), void (*)(void));
+extern int ehsys_7B552C34(int);
+extern int ehsys_1856E536(void *, int);
+extern void *ehsys_F5E3080C(void);
+extern int ehsys_DFCA450B(int, int);
+extern void ehsys_1EC5342B(int);
+extern int ehsys_CABEA834(void *, int);
+extern int ehsys_E6E4401F(int, int, int);
+extern void ehsys_2012884C(void *, int, int);
+extern void ehsys_EF9B5D06(void *, void *);
+extern int ehsys_39ADDA9F(void *);
+extern void ehsys_E1139F1A(void *);
+extern void ehsys_13A4081A(int);
+extern void ehsys_8060707A(void);
+extern void ehsys_08813E19(int, int);
+extern void ehsys_B48A11FB(void *, int);
+extern void ehsys_BE3756D0(int, int);
+extern void ehsys_memset(void *, int, int);
+extern void ehsys_strcpy(void *, void *);
+extern void ehsys_strcat(void *, void *);
+extern int ehsys_strlen(void *);
+extern int ehsys_sceIoDopen(void);
+extern void ehsys_sceIoDclose(int);
+extern int ehsys_sceIoDread(int, void *);
+extern void ehsys_70CB33BE(int, int);
+extern int ehsys_DCA0DCE1(void);
+extern void ehsys_50EA4D71(void *, int);
+extern void ehsys_245526EE(void);
+extern void ehsys_C87BAB32(int, int, void *);
+extern void ehsys_942B03D0(int, int);
+extern void ehsys_60B55A50(int);
+extern void ehsys_B89D38DC(int, int, int, void *);
+extern void ehsys_B8AD96EA(int);
+extern void ehsys_A4AFF8E6(void);
+extern void ehsys_frame_sync(void);
 
 extern char D_00005A74;
 extern char D_00005A7C;
@@ -182,6 +181,7 @@ extern volatile unsigned char D_000A3FF9; /* +0x64F9: substate byte */
 /* forward declarations: call graph is not in address order */
 void func_00000034(void);
 void func_00000138(void);
+void func_00000184(void);
 void func_000001C0(void);
 void func_000001C8(int mode);
 void func_000006B4(void);
@@ -199,7 +199,7 @@ void func_00000894(int arg0, int arg1, void *arg2);
  * (func_00000034) and teardown (func_000001C0) callbacks.
  * MATCH 100% (mwccpsp_3.0.1_219, -O4,s -sdatathreshold 0). */
 int func_00000000(void) {
-    func_000008B4(func_00000034, func_000001C0, (void *) &D_00005AC0);
+    ehsys_B4471B5E(func_00000034, func_000001C0, (void *) &D_00005AC0);
     return 0;
 }
 
@@ -229,11 +229,11 @@ void func_00000034(void) {
     int mode;
 
     func_00000138();
-    func_0000175C(0);
-    func_000008CC(0, func_000005C8, func_000006B4);
+    ehsys_13A4081A(0);
+    ehsys_C2E59A21(0, func_000005C8, func_000006B4);
 
     while (!done) {
-        func_00002FD4();
+        ehsys_frame_sync();
         mode = state[1]; /* +0x4 */
         switch (mode) {
         case 1:
@@ -253,18 +253,28 @@ void func_00000034(void) {
     }
 
     func_00000184();
-    func_0000180C();
-    func_00002FD4();
-    func_00001A2C(9, 0);
+    ehsys_8060707A();
+    ehsys_frame_sync();
+    ehsys_08813E19(9, 0);
 }
 
 /* func_00000138 — viewer init: zero the whole state blob, open the movie
  * resource, and set the initial mode.
  * MATCH 100% (mwccpsp_3.0.1_219, -O4,s -sdatathreshold 0). */
 void func_00000138(void) {
-    func_00001D7C((void *) &D_0009DB00, 0, 0x653C);
-    D_0009DB00 = func_00000CE4((void *) &D_00005AD0, 0x80000);
+    ehsys_memset((void *) &D_0009DB00, 0, 0x653C);
+    D_0009DB00 = ehsys_1856E536((void *) &D_00005AD0, 0x80000);
     D_0009DB04 = 1;
+}
+
+/* func_00000184 — "release-and-clear" cleanup of a global handle.
+ * MATCH 100% (mwccpsp_3.0.1_219, -O4,s -sdatathreshold 0). */
+void func_00000184(void) {
+    volatile int *p = &D_0009DB00;
+    if (*p != 0) {
+        ehsys_1078C73B(*p);
+        *p = 0;
+    }
 }
 
 /* func_000001C0 — empty callback (teardown hook registered by
@@ -327,8 +337,8 @@ void func_000001C8(int mode) {
 void func_0000024C(void) {
     char buf[0x100];
 
-    func_00001DBC(buf, (void *) (long) func_00000924(3));
-    func_00001DCC(buf, &D_00005A74);
+    ehsys_strcpy(buf, (void *) (long) ehsys_7B552C34(3));
+    ehsys_strcat(buf, &D_00005A74);
     D_000A3F08 = 0;
     func_000006BC(buf);
 }
@@ -344,61 +354,78 @@ void func_0000024C(void) {
  * `__builtin_allegrex_min`/`_max` (see the file header) — that is confirmed
  * correct and is what the original wrote, worth 2 words.
  *
- * ---- 2026-08-16 investigation. The remaining gap is ONE bug, now
- * precisely characterised. Read this before retrying: ----
+ * ---- 2026-08-17 investigation. SUPERSEDES the earlier "store-elimination
+ * bug" theory recorded here, which did not hold up. Read this before
+ * retrying so the dead ends are not walked again: ----
  *
  * The whole 13-word gap is address re-materialisation: the target keeps
  * &D_000A3F0C in $s0 and the record base ($s0 + 0x4C) in $s1 for the entire
- * function, while this version re-derives a lui/addiu pair per access.
- * Caching the base IS achievable — a `volatile` pointer does it, and so does
- * modelling the blob as a real struct (both were tried this session; the
- * struct form reaches 107 words with lui=5, exactly matching the target's
- * five lui). Combined with the correct bitfield modelling for +0xCC (see
- * below) the arithmetic works out to exactly 116.
+ * function, while this version re-derives a lui/addiu pair per access
+ * (lui=32 vs the target's 5).
  *
- * WHAT BLOCKS IT — an mwccpsp store-elimination bug. Once two pointers share
- * a base (i.e. one is derived from the other, however it is written:
- * `&cfg->rec`, a cast off `cfg`, or a nested `cfg->rec.field` access), the
- * compiler SILENTLY DROPS byte stores whose immediate value also appears in
- * a nearby halfword store. In this function that kills exactly four stores —
- * rec+0x50 and rec+0x5C (0xC, shared with the four `sh ... 0xC` above them),
- * cfg+0xD2 (0xA, shared with `sh 0xA` at 0xD0), and the cfg+0xCD
- * read-modify-write (0x10, shared with `sh 0x10` at 0xF6). Those four plus
- * their setup are 9 words: 107 + 9 = 116, which is the entire gap.
+ * ROOT CAUSE. It is not a bug and not flag-specific. At -O2 and above MWCC
+ * enables "copy and expression propagation" (see `mwccpsp.exe -help`, -opt
+ * level=2), which propagates &D_000A3F0C as a compile-time constant into all
+ * 31 use sites and re-materialises it at each one instead of keeping it live
+ * in a saved register. There is no sub-option to disable propagation alone —
+ * -opt exposes only `level=` and `[no]intrinsics` — so no flag fixes this
+ * without regressing the 15 functions that already match.
  *
- * Established about the bug, so it need not be re-derived:
- *  - it is NOT `volatile`-specific: it happens with plain non-volatile
- *    struct members just the same;
- *  - it is NOT build-specific: all 11 installed mwccpsp builds drop the
- *    same four stores;
- *  - it does NOT reproduce in a small isolated function, even with a shared
- *    base register passed in as a parameter — the surrounding store density
- *    matters;
- *  - the direction of derivation flips which stores die. Deriving cfg FROM
- *    rec (`rec` gets the lui, `cfg = (char *)rec - 0x4C`) keeps all 13 byte
- *    stores at 115/116 words with lui=5 — but it also swaps the register
- *    roles ($s0=rec, $s1=cfg) versus the target, so it cannot match
- *    byte-for-byte even at the right size.
+ * MEASURED, so it need not be re-derived (struct model, all stores correct):
+ *  - -O4,s / -O4,p / -O4 / -O3,s : 128 words, lui=31 — IDENTICAL. The flag
+ *    makes no difference to this function at all.
+ *  - -O2,s : 131 words, lui=31.
+ *  - -O1,s : 143 words, lui=5 — the target's cached-base shape appears, but
+ *    the rest of the function is then unoptimised.
+ *  - all 11 installed mwccpsp builds (121..219) at -O4,s : 128 words, lui=31.
+ *    The compiler build is not the variable.
+ *  - `register` on the pointers, and -inline on/all/auto/level=8/deferred:
+ *    no effect. Forcing the body inline just re-exposes the constant and it
+ *    folds again.
  *
- * So a matching version needs the target's shape (cfg is the lui root, rec
- * derived from it) which is exactly the shape that triggers the bug. The
- * form committed here re-materialises addresses and is 13 words over, but it
- * is CORRECT — it writes every field. Do not trade that away for a smaller
+ * DISPROVEN — the previous note claimed an mwccpsp store-elimination bug
+ * under -O4,p that silently dropped four byte stores once two pointers shared
+ * a base, and claimed a struct form reached 107 words / lui=5. Neither
+ * reproduces with the layout used here: under BOTH flags all 13 sb and 11 sh
+ * are emitted, and no source shape tried reached lui=5 at -O2+. If the old
+ * result was real it depended on some detail of that session's struct
+ * layout, not on the flag.
+ *
+ * THE DIAGNOSTIC THAT LOCATED IT. Written as a helper taking the blob as a
+ * parameter — `void init(Cfg *cfg)` — the identical body compiles to 103
+ * words with lui=4, all 13 sb / 11 sh, and a prologue matching the target
+ * exactly, including `addiu <rec>, <cfg>, 0x4C` scheduled into the
+ * ehsys_memset delay slot. A pointer PARAMETER cannot be re-materialised, so
+ * the base stays in a saved register. The target sits symmetrically between
+ * the two forms: direct = 129 (+13), parameter = 103 (-13), target = 116.
+ * This is diagnostic only — the target takes no arguments, so the parameter
+ * form is not itself a candidate.
+ *
+ * WHAT IS STILL OPEN. A no-argument source shape that denies MWCC the
+ * constant while still emitting %hi/%lo of D_000A3F0C. Worth noting that the
+ * target mixes two addressing modes in one function: &D_000A3F0C is a
+ * relocated symbol reference (%hi/%lo), while D_0009DB00, D_000A3F08 and
+ * D_000A4030 are raw absolute (`lui $v0, 0xA` / `lw $v0, -0x2500($v0)`).
+ * That split may be a clue about how the original source named these.
+ *
+ * DECOMP-PERMUTER, tried and exhausted (2026-08-17). 337,244 iterations at
+ * -j4 over 30 minutes. Best diff score 3875, down from the base 6830, but
+ * nowhere near 0. Its best candidate reaches 123 words (vs this version's 129,
+ * target 116) — but it gets there by emitting sb=12 / sh=12 against the
+ * target's 13/11, i.e. it dropped a byte store and widened another. That is
+ * semantically WRONG and was rejected. This is the expected outcome: the
+ * permuter reshapes C, and every reshape still leaves &D_000A3F0C a
+ * compile-time constant for the propagation pass to fold, so it cannot reach
+ * the cached-base form. Do not re-run it on this function without first
+ * changing something that denies the compiler that constant. The scaffold is
+ * reusable for other functions (base.c / target.o / compile.sh / settings.toml;
+ * note GNU `as` cannot assemble the Allegrex min/max, so target.o must emit
+ * those two as .word).
+ *
+ * The form committed here re-materialises addresses and is 13 words over, but
+ * it is CORRECT — it writes every field. Do not trade that away for a smaller
  * word count: an object missing four field writes is a worse result than a
  * NONMATCHING draft.
- *
- * FLAG UPDATE (same session): the store-elimination bug above is specific to
- * `-O4,p`. Under the project's corrected `-O4,s` it does not happen at all —
- * every source shape tried (struct members, volatile pointers, casts) emits
- * all 13 byte stores. But `-O4,s` also never caches the blob's base address
- * in a saved register here, so the count stays at 129 with lui=32. So the two
- * halves of the problem now sit on opposite sides of the flag: `-O4,p` gives
- * the target's five lui but drops four stores, `-O4,s` keeps every store but
- * re-materialises every address. The version below is the `-O4,s` one, which
- * is correct. Note the `volatile`+local-pointer trick that works elsewhere in
- * this file does NOT cache the base here, likely because the accesses cast
- * the pointer to a different type at each use rather than going through the
- * declared pointer type — worth attacking from that angle next.
  *
  * ALSO ESTABLISHED (reusable): +0xCC is a BITFIELD. The target truncates the
  * source value once (`andi $a2,$zero,1`) then per field does
@@ -417,7 +444,7 @@ void func_00000294(void) {
     unsigned char b;
     int val_408, val_530, t0, t1;
 
-    func_00001D7C(cfg, 0, 0x124);
+    ehsys_memset(cfg, 0, 0x124);
 
     *(int *) (cfg + 0x4C) = 1;
     *(int *) (rec + 0x14) = 1;
@@ -465,7 +492,7 @@ void func_00000294(void) {
     *(int *) (rec + 0x38) = 0;
     *(int *) (rec + 0x58) = 0;
 
-    func_00001694(cfg, b, flag);
+    ehsys_2012884C(cfg, b, flag);
 
     /* geometry clamp: pull the two counters at D_0009DB00+0x6408/+0x6530
      * (aka D_000A3F08 / D_000A4030 via the "middle of the blob" raw
@@ -483,10 +510,10 @@ void func_00000294(void) {
     *(unsigned char *) (cfg + 0xD6) = (b & ~0x1F) | (t1 & 0x1F);
 }
 
-/* func_00000464 — tail-calls into func_000016C4 with the config blob.
+/* func_00000464 — tail-calls into ehsys_E1139F1A with the config blob.
  * MATCH 100% (mwccpsp_3.0.1_219, -O4,s -sdatathreshold 0). */
 void func_00000464(void) {
-    func_000016C4(&D_000A3F0C);
+    ehsys_E1139F1A(&D_000A3F0C);
 }
 
 /* func_00000470 — per-frame update for mode 2: tracks a load counter and,
@@ -501,8 +528,8 @@ void func_00000464(void) {
  *  - the tail's branch polarity needs a single-case `switch`; see the body. */
 void func_00000470(void) {
     volatile int *s1 = &D_0009DB00;
-    void *obj = func_00000D74();
-    int result = func_000016A4(&D_000A3F0C);
+    void *obj = ehsys_F5E3080C();
+    int result = ehsys_39ADDA9F(&D_000A3F0C);
     int flags = *(int *) ((char *) obj + 0xC);
     int changed = 0;
     int counter;
@@ -521,7 +548,7 @@ void func_00000470(void) {
     }
 
     if (changed) {
-        func_00001B8C(s1[0x194E], changed);
+        ehsys_BE3756D0(s1[0x194E], changed);
     }
 
     /* single-case `switch`, not an `if`: the switch is what makes MWCC branch
@@ -545,18 +572,18 @@ void func_00000470(void) {
  * MATCH 100% (mwccpsp_3.0.1_219, -O4,s -sdatathreshold 0). */
 void func_00000540(void) {
     volatile int *s0 = &D_0009DB00;
-    func_00002DEC(0, 1);
+    ehsys_70CB33BE(0, 1);
     goto test;
 loop:
-    func_00002FD4();
+    ehsys_frame_sync();
 test:
-    if (!func_00002DF4()) {
+    if (!ehsys_DCA0DCE1()) {
         goto loop;
     }
-    func_00002DFC(&D_00085B00, 0x18000);
+    ehsys_50EA4D71(&D_00085B00, 0x18000);
     *(volatile int *) ((volatile char *) s0 + 0x6534) = 1;
-    func_00002FD4();
-    func_00002E0C();
+    ehsys_frame_sync();
+    ehsys_245526EE();
     func_000001C8(2);
 }
 
@@ -599,17 +626,17 @@ void func_000005C8(void) {
     case 1:
         goto case1;
     }
-    func_00002EB4(0x10, 0x10);
-    func_00002E94(0, 0, &D_00005A7C);
+    ehsys_942B03D0(0x10, 0x10);
+    ehsys_C87BAB32(0, 0, &D_00005A7C);
     return;
 case1:
-    func_00002EB4(0x10, 0x10);
-    func_00002E94(0, 0, &D_00005A88);
+    ehsys_942B03D0(0x10, 0x10);
+    ehsys_C87BAB32(0, 0, &D_00005A88);
     return;
 case2:
-    handle = func_00000DA4(1, 0);
-    func_0000169C(&handle, (void *) ((volatile char *) state + 0x640C));
-    func_00000DAC(handle);
+    handle = ehsys_DFCA450B(1, 0);
+    ehsys_EF9B5D06(&handle, (void *) ((volatile char *) state + 0x640C));
+    ehsys_1EC5342B(handle);
     return;
 case3:
     /* indexed as int[] (0x194D = 0x6534/4, 0x194C = 0x6530/4) rather than via a
@@ -618,7 +645,7 @@ case3:
      * into the load and the store immediates off $s0. */
     if (state[0x194D] != 0) {
         int slot = state[0x194C];
-        func_00001A5C((void *) ((volatile char *) state + (slot << 8) + 8), 0xF3F9);
+        ehsys_B48A11FB((void *) ((volatile char *) state + (slot << 8) + 8), 0xF3F9);
         state[0x194D] = 0;
     }
 }
@@ -630,9 +657,9 @@ void func_000006B4(void) {
 }
 
 /* func_000006BC — walks a linked list of directory/file entries (via
- * func_00002224/func_00002234/func_0000222C), recursing into
+ * ehsys_sceIoDopen/ehsys_sceIoDread/ehsys_sceIoDclose), recursing into
  * subdirectories and appending matched entries into the 0x100-byte-record
- * table at D_0009DB00+0x8. The func_00002234 out-param is a 0x160-byte
+ * table at D_0009DB00+0x8. The ehsys_sceIoDread out-param is a 0x160-byte
  * directory-entry record: flags at +0x0, the name string at +0x58 (the
  * buffer sits at sp+0x20 and the name is read at sp+0x78; the 0x160 size is
  * fixed by the target's 0x180 frame, and is the one value that puts the
@@ -653,7 +680,7 @@ void func_000006B4(void) {
 void func_000006BC(void *arg0) {
     volatile int *state = &D_0009DB00;
     char dirent[0x160];
-    int handle = func_00002224();
+    int handle = ehsys_sceIoDopen();
     int flags;
     int count;
 
@@ -662,25 +689,25 @@ void func_000006BC(void *arg0) {
      * slot index below (the target's `sll $v0,$v1,8` consumes the very $v1
      * the condition's `lw` produced). Hoisting the check into the body is
      * what made MWCC cache `state + 0x6408` in its own base register. */
-    while (func_00002234(handle, dirent) > 0 &&
+    while (ehsys_sceIoDread(handle, dirent) > 0 &&
            (count = state[0x1902]) < 0x64) {
         flags = *(int *) dirent;
         if (flags & 0x1000) {
             if (*(signed char *) (dirent + 0x58) != 0x2E) {
-                int len = func_00001DE4(arg0);
-                func_00001DCC(arg0, dirent + 0x58);
-                func_00001DCC(arg0, &D_00005AA4);
+                int len = ehsys_strlen(arg0);
+                ehsys_strcat(arg0, dirent + 0x58);
+                ehsys_strcat(arg0, &D_00005AA4);
                 func_000006BC(arg0);
                 ((char *) arg0)[len] = 0;
             }
         } else if (flags & 0x2000) {
             char *slot = (char *) state + (count << 8) + 8;
-            func_00001DBC(slot, arg0);
-            func_00001DCC(slot, dirent + 0x58);
+            ehsys_strcpy(slot, arg0);
+            ehsys_strcat(slot, dirent + 0x58);
             state[0x1902] = state[0x1902] + 1;
         }
     }
-    func_0000222C(handle);
+    ehsys_sceIoDclose(handle);
 }
 
 /* func_000007C8 — the per-entry render callback. func_00000294 stores its
@@ -694,7 +721,7 @@ void func_000006BC(void *arg0) {
  *   - that byte string is widened into a 0x100-entry short[] on the stack,
  *     one byte per halfword, NUL-terminated — a hand-rolled widening loop,
  *     not a library call;
- *   - it then sets the text colour/style (func_00002EB4 / func_00002EC4
+ *   - it then sets the text colour/style (ehsys_942B03D0 / ehsys_60B55A50
  *     with 0xFF000000) and hands the widened label to func_00000894, which
  *     applies the <<6 fixed-point coordinate scaling and calls the draw stub;
  *   - arg2/arg3 are the row's x/y, both offset by +2 before drawing.
@@ -703,7 +730,7 @@ void func_000006BC(void *arg0) {
  *  - the copy loop is written test-first with explicit `goto`s to reproduce
  *    the target's bottom-tested layout;
  *  - arg0 looked unused and had been typed that way, which was WRONG and cost
- *    a lot of time. It IS forwarded as the first argument of func_00000EB4:
+ *    a lot of time. It IS forwarded as the first argument of ehsys_CABEA834:
  *    the target never writes $a0 before that jal and sets only $a1 = -1 in
  *    its delay slot. Because $a0 is therefore live, it is unavailable for the
  *    copy-loop pointer, which is why the target keeps that pointer in $a1 —
@@ -726,13 +753,13 @@ test:
     }
     *dst = 0;
 
-    func_00002F94(func_00000EFC(func_00000EB4(arg0, -1), 0, 1));
-    func_00002EB4(0xC, 0xC);
-    func_00002EC4(0xFF000000);
+    ehsys_B8AD96EA(ehsys_E6E4401F(ehsys_CABEA834(arg0, -1), 0, 1));
+    ehsys_942B03D0(0xC, 0xC);
+    ehsys_60B55A50(0xFF000000);
     func_00000894(arg2 + 2, arg3 + 2,
-                   (void *) (label + func_00001DE4(
-                                          (void *) (long) func_00000924(3))));
-    func_00002F9C();
+                   (void *) (label + ehsys_strlen(
+                                          (void *) (long) ehsys_7B552C34(3))));
+    ehsys_A4AFF8E6();
 }
 
 /* func_00000894 — tail-calls the real draw routine with geometry derived
@@ -740,5 +767,5 @@ test:
  * total).
  * MATCH 100% (mwccpsp_3.0.1_219, -O4,s -sdatathreshold 0). */
 void func_00000894(int arg0, int arg1, void *arg2) {
-    func_00002EE4(arg0 << 6, arg1 << 6, (0x1E0 - arg0) << 6, arg2);
+    ehsys_B89D38DC(arg0 << 6, arg1 << 6, (0x1E0 - arg0) << 6, arg2);
 }

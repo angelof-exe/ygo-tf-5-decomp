@@ -50,6 +50,17 @@ Project: matching reconstruction of the code of **Yu-Gi-Oh! 5D's Tag Force 5**
 - **No Tag Force decomp has ever existed**: we're the first. Card logic is **hardcoded**
   in `rel_duel_eng.prx`, not in data → decompiling the code is the only way to really
   understand it.
+- **ALL IMPORTS ARE NAMED** (`docs/nids/README.md`, `scripts/resolve_nids.py`). Calls out
+  of a module are `sceHttpInit`, `ehsys_memset`, `ehsys_B4471B5E` — not stub addresses.
+  The 1729-entry `libehsys_rel` NID array is byte-identical in all 28 modules AND in the
+  EBOOT export table (`sha1 820088858e31`), so a name is the SAME engine function
+  everywhere; `ehsys_B4471B5E` is the module-registration call that opens every module.
+  NID = first 4 bytes of SHA-1(name), little-endian, so any candidate name is provable.
+- **A module can be RELINKED and checksum-verified**: `make MODULE=rel_html_view`
+  (from asm) prints OK for a correct splat config; `SRC=1` swaps in our compiled C.
+  Needs `emit_subalign: False` and a per-module `asset_path` in the config —
+  SUBALIGN(16) pads every blob and a shared `assets/` dir means all 28 modules
+  overwrite each other's data.
 - **Local toolchain already installed and verified**: splat64 (platform `psp`),
   spimdisasm, rabbitizer (category `R4000ALLEGREX`, with VFPU), in `.venv`;
   asm-differ, m2c, decomp-permuter, pspdecrypt, wibo, mwccpsp_3.0.1_219 in
@@ -82,14 +93,33 @@ plaintext PRX / EBOOT.elf
    section-accurate example covering 100% of the file — see its header comments for
    the byte-offset table and a linker-script-ordering gotcha).
 3. `splat split config/module.yaml` → generates `asm/`.
-4. Resolve imports: `.rodata.sceNid` lists the NIDs of imported SDK functions; name them
-   with a NID database (see the `psp-allegrex-tools` skill).
-5. For each function: `m2c` → draft C → iterate until the diff is empty, verifying
+4. Imports are ALREADY RESOLVED, project-wide — do not re-derive them per module.
+   `scripts/resolve_nids.py` names every import of every module; `config/symbols/<module>.txt`
+   feeds splat so the disassembly calls them by name. See `docs/nids/README.md`.
+5. NID MATCHING IS PART OF ANALYSING EVERY FUNCTION — not a separate phase.
+   Before reasoning about what a function does, resolve the imports it calls:
+     - `grep ' = 0xXXXXXXXX;' config/symbols/<module>.txt` for a stub address, or
+       look the NID up in `nids/ehsys.csv` / `nids/sdk.csv` / `nids/modules.csv`;
+     - a real SDK name usually identifies the STRUCTS and CONSTANTS too (this is how
+       rel_html_view's 0xA8 blob turned out to be `pspUtilityHtmlViewerParam`, and how
+       `0x100..0x106` turned out to be the net/http/ssl module ids);
+     - `ehsys_<NID>` with no name yet: check `nids/ehsys.csv` for its EBOOT address and
+       its project-wide call count. A high count means naming it pays off 28 modules over;
+       add a candidate to `EXTRA_CANDIDATES` in `scripts/resolve_nids.py` (hash-verified,
+       so a wrong guess can only fail, never mis-name), or identify it in `build/EBOOT.elf`.
+   Record what you learn in `nids/*.csv`, NOT only in the one `src/*.c` — the same name is
+   used by all 28 modules, so one edit renames it everywhere.
+6. For each function: `m2c` → draft C → iterate until the diff is empty, verifying
    either on decomp.me OR **locally** with `scripts/mwcc_build.sh` +
    `scripts/mwcc_diff.py` (wibo + real mwccpsp_3.0.1_219, both fetched by
    `setup_tools.sh` — no decomp.me account needed) → mark "MATCH 100%" in the
    function's comment.
-6. Rebuild and verify the sha1 against `checksums.sha1`.
+7. Rebuild and verify: `make MODULE=<name>` relinks the module from asm + the
+   data blobs and checks its sha1 against `checksums.sha1`; `make MODULE=<name>
+   SRC=1` does the same with YOUR compiled C in place of the disassembly, and
+   only passes once every function matches. `SRC=1` printing OK is the
+   definition of done for a module. When it fails it names the first differing
+   byte, which points straight at the offending function.
 
 ## Recommended module order
 
