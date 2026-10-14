@@ -1,9 +1,108 @@
-# `func_00000294` — why it is not matched, and what was ruled out
+# `func_00000294` — how it was matched, and what was ruled out first
 
-Status as of 2026-08-17: **`rel_movie_viewer` is 15/16 matched.** This document
-records the investigation into the one remaining function so the dead ends are
-not re-walked. A condensed version lives in the comment block above
-`func_00000294` in `src/rel_movie_viewer.c`.
+**Status (2026-10-14): MATCHED. `rel_movie_viewer` is 16/16**, and
+`make MODULE=rel_movie_viewer SRC=1` relinks to the shipped sha1. The
+resolution comes first below. The rest of the document is the earlier
+investigation, kept so the dead ends are not walked again. Where it
+reached wrong conclusions it is marked **[superseded]**. The code and a
+short version of this are in `src/rel_movie_viewer.c` above
+`func_00000294`.
+
+## Resolution
+
+Three independent changes were needed. Each was confirmed in isolation.
+
+### 1. Split the basic block that holds `cfg = &D_000A3F0C` (13 words)
+
+The lead came from `rel_html_view` `func_00000470`, which had the same
+symptom. MWCC's copy propagation of a global's constant address only
+rewrites uses **inside the basic block that holds the `p = &global`
+assignment**. Inside that block every `p->field` access gets its own
+`lui` plus `%lo`. After the first branch, accesses go through the saved
+register. Splitting the block with a branch on a value the optimiser only
+folds later leaves no trace in the output:
+
+```c
+ViewerCfg *cfg = (ViewerCfg *) &D_000A3F0C;
+CfgRec *rec = &cfg->rec;
+int size = sizeof(*cfg);
+...
+if (size != 0) {
+    ehsys_memset(cfg, 0, sizeof(*cfg));
+}
+```
+
+The same body with this one change dropped from 129 to 102 words, with
+`&D_000A3F0C` in a saved register for the whole function. A test on `cfg`
+itself also splits the block, but it leaves a real `beqz` behind.
+
+So "Root cause" below is right about the mechanism (propagation of a
+constant address) but wrong to call it uncontrollable from C.
+
+### 2. Declare `D_000A3F0C` as its real 0x124-byte type (the "dropped byte stores")
+
+With the address cached, the struct version emitted only 9 of the 13 `sb`
+stores. The cause was the declaration `extern char D_000A3F0C;`: a
+**1-byte object**. MWCC's dead-store elimination then seems to treat
+every byte store past the end of that object as the same location. A
+constant byte store is dropped whenever a later byte store to the blob
+follows with no byte load in between. Minimal repro:
+
+```c
+cfg->rec.f50 = 0xC; cfg->rec.f09 = 2;   /* f50 store vanishes */
+```
+
+It does not reproduce with a correctly-sized global. Declaring
+`extern ViewerCfg D_000A3F0C;` with the real struct type kept all 13 `sb`
+/ 11 `sh`. This explains the "store-elimination bug" of the old notes
+(see below). It was never about `-O4,p`. It is about the object's
+declared size. The char-pointer-cast draft hid it because, with casts, the
+stores were not field accesses of a known object.
+
+The blob is the same type as `MsgBox` in `src/rel_umd_replace.c` (also
+0x124 bytes and also passed to `ehsys_2012884C`). That call takes **one**
+argument: the old `(void *, int, int)` declaration was wrong. `+0xCC`,
+`+0xCD` (bits 3..6) and `+0xD6` (bits 0..4) are bitfields. `int flag = 0;`
+assigned to the `+0xCC` bits gives the target's single
+`andi $a2,$zero,1` followed by `sll`s.
+
+Also load-bearing: the redundant `(ViewerCfg *)` cast in the
+initialiser. Without it the record base `cfg + 0x4C` becomes its own
+`lui`/`addiu` pair instead of `addiu $s1,$s0,0x4C`, giving 117 words.
+
+### 3. The tail: reuse one variable (last 4 words)
+
+That left 116 words and 4 differing instructions in the clamp after
+`ehsys_2012884C`. They were register colouring and scheduling only: ours
+had `a`/`b` in `$a2`/`$a1`, the target had them in `$a1`/`$v1`, and the
+target scheduled `addiu $a0,$a1,-0xA` before the `sh` to `+0xD0`.
+About 40 hand-written rephrasings changed nothing: types, statement
+order, temporaries, inline helpers, operand order and struct-member
+access. So the tail was reduced to a 30-line standalone function, a
+target `.o` was hand-assembled for it, and decomp-permuter ran on that.
+It hit score 0 within ~5k iterations. The deciding shape is **one
+variable that first holds `y - 10`, is copied out, and then is reused for
+the second load**:
+
+```c
+y = D_000A3F08;
+v = y - 0xA;
+lim = v;
+v = D_000A4030;
+cfg->fD0 = y;
+cfg->fD4 = __builtin_allegrex_min(v, lim);
+cfg->fD6.lo = __builtin_allegrex_max(0, (v - y) + 0xA);
+```
+
+Reusing `v` lets `D_000A4030` share `$v1` with its own `lui`. That pushes
+`y - 10` into `$a0`, which frees the `addiu` to be scheduled before the
+store.
+
+**Reusable technique:** when only a few register-allocation words remain
+in a large function, cut the region out into a tiny function with the
+same live-in state (here: a saved-register base after a call). Assemble a
+target for just that region and permute the small file. It is much faster
+and much better targeted than permuting the whole function.
 
 ## What the function does
 
@@ -16,7 +115,7 @@ using the Allegrex `min`/`max` intrinsics.
 There are **no loops** and essentially no branching. This matters — see
 "The differentiator" below.
 
-## The discrepancy
+## The discrepancy (before the fix)
 
 Our version is semantically complete and correct. It emits every store the
 target does, verified by kind: **13 `sb`, 11 `sh`, 14 data `sw`** — matching the
@@ -33,7 +132,7 @@ The entire difference is how the blob's address is formed:
 
 Same stores, same values, same order — different addressing.
 
-## Root cause
+## Root cause **[superseded in part — see Resolution §1]**
 
 At `-O2` and above MWCC enables what its own `-help` text calls *"copy and
 expression propagation"*. Because `&D_000A3F0C` is a compile-time constant as
@@ -57,7 +156,7 @@ a saved register (which costs a save/restore pair) is a legitimate choice.
 | Declaring it `volatile` (struct and pointer) | 128 / `lui=31`. |
 | `decomp-permuter`, 337,244 iterations / 30 min | Best diff score 3875 (from 6830 base), nowhere near 0. Best candidate reached 123 words **by dropping a byte store and widening another** (`sb`=12/`sh`=12 vs 13/11) — semantically wrong, rejected. |
 
-### A previously recorded theory that did not hold up
+### A previously recorded theory that did not hold up **[superseded — see Resolution §2: it was real, but caused by the `extern char` declaration]**
 
 Earlier comments in `src/rel_movie_viewer.c` described an `-O4,p`-specific
 mwccpsp **store-elimination bug** that silently dropped four byte stores once
@@ -115,7 +214,7 @@ is nothing to hoist.
 (Inference, not isolated experimentally — it is the only other instance in the
 module and it sits in a loop.)
 
-## The open question
+## The open question **[answered — see Resolution §1]**
 
 **What construct makes MWCC hold a global's address in a callee-saved register
 across straight-line code at `-O4`?**
@@ -130,7 +229,7 @@ raw absolute (`lui $v0, 0xA` / `lw $v0, -0x2500($v0)`) with no relocation. That
 split suggests these were declared or reached differently in the original
 source.
 
-## Why the unmatched version is the one committed
+## Why the unmatched version was the one committed (historical)
 
 A 13-word-smaller version exists but drops a field write. A decompilation that
 produces a subtly wrong object is worse than one honestly marked as not-yet
@@ -141,10 +240,12 @@ The committed version is the **correct, oversized** one, tagged NONMATCHING.
 ## Reproducing / continuing
 
 ```sh
-# baseline
+# check
 scripts/mwcc_build.sh src/rel_movie_viewer.c
 scripts/mwcc_diff.py asm/rel_movie_viewer/text.s build/mwcc/rel_movie_viewer.o func_00000294
-# -> SIZE MISMATCH target=116 words candidate=129 words
+# -> func_00000294: MATCH (116 words)
+rm -f build/rel_movie_viewer.elf build/rel_movie_viewer.prx
+make MODULE=rel_movie_viewer SRC=1   # -> OK ... matches checksums.sha1
 
 # flag / build sweeps: pass flags as extra args to mwcc_build.sh, or invoke
 # tools/wibo-bin/wibo tools/mwccpsp_3.0.1_<N>/mwccpsp.exe directly
@@ -173,6 +274,7 @@ Gotchas worth remembering:
   error. (`pycparser` tolerates the implicit declaration.)
 - The permuter needs `toml` and `Levenshtein` installed in `.venv`.
 
-Do **not** re-run the permuter on this function without first changing something
-that denies the compiler the constant address — otherwise it is provably
-searching the wrong space.
+The 2026-08 whole-function permuter run could not succeed, because every
+candidate kept the address propagation (Resolution §1) and the 1-byte
+declaration (§2). Once those were fixed, a permuter run on the reduced
+tail found the last 4 words (§3).

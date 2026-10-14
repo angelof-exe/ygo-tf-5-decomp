@@ -9,7 +9,7 @@
  *               treating any word with a matching relocation (HI16/LO16/26,
  *               same symbol) on both sides as equal regardless of its baked
  *               immediate. Only functions marked "MATCH 100%" below have been
- *               confirmed this way; 15/16 functions in this file currently are.
+ *               confirmed this way; 16/16 functions in this file currently are.
  *
  * IMPORTS ARE NAMED (docs/nids/README.md). Every call out of this module is
  * now a resolved name rather than a stub address, and those names are shared
@@ -71,12 +71,13 @@
  *     grep __builtin_allegrex` — bitrev, clz/clo, ctz/cto, ext/ins, rotl/rotr,
  *     seb/seh, wsbh/wsbw, sqrt_s, and the float round/floor/ceil/trunc.
  *     Used by func_00000470; func_00000294 needs both;
- *   - whether it caches a global's address in a saved register for reuse
- *     across many straight-line statements (target sometimes does; this
- *     compiler was confirmed by isolated experiment to always
- *     re-materialize a fresh `lui/addiu` per access instead, regardless of
- *     pointer/struct form — func_00000294, and the `state + 0x6408/0x6534`
- *     case in func_000006BC/func_000005C8);
+ *   - [RESOLVED — was wrong] whether it caches a global's address in a
+ *     saved register across many straight-line statements. This was
+ *     recorded as uncontrollable; it is not. MWCC only propagates the
+ *     constant address inside the basic block that holds `p = &global`, so
+ *     splitting that block with a branch the optimiser removes later
+ *     (`int size = sizeof(*p); if (size != 0) memset(p, ...)`) keeps it in
+ *     $s0. See func_00000294 and docs/10;
  * Treat DRAFTs as very-close NONMATCHING, not as verified.
  *
  * CAUTION on "the compiler just allocates registers differently" diagnoses:
@@ -128,7 +129,7 @@ extern int ehsys_DFCA450B(int, int);
 extern void ehsys_1EC5342B(int);
 extern int ehsys_CABEA834(void *, int);
 extern int ehsys_E6E4401F(int, int, int);
-extern void ehsys_2012884C(void *, int, int);
+extern void ehsys_2012884C(void *);
 extern void ehsys_EF9B5D06(void *, void *);
 extern int ehsys_39ADDA9F(void *);
 extern void ehsys_E1139F1A(void *);
@@ -163,7 +164,75 @@ extern char D_00005AA4;
 extern char D_00005AC0;
 extern char D_00005AD0;
 extern char D_00085B00;
-extern char D_000A3F0C;
+/* The "viewer config" blob at D_000A3F0C (0x124 bytes). The same layout is
+ * the MsgBox of src/rel_umd_replace.c (also cleared with 0x124 and handed
+ * to ehsys_2012884C). Field names are byte offsets until their meaning is
+ * known.
+ *
+ * D_000A3F0C MUST be declared with this real type. Declared as a 1-byte
+ * `extern char`, MWCC's dead-store pass treats every byte store past the
+ * end of that object as aliasing the same location, and silently drops
+ * four of the 13 `sb` stores in func_00000294 (that was the "store
+ * elimination bug" of earlier notes, see docs/10). */
+typedef struct {
+    unsigned char b0 : 1;
+    unsigned char b1 : 1;
+    unsigned char b2 : 1;
+    unsigned char b3 : 1;
+    unsigned char b4 : 1;
+    unsigned char b5 : 1;
+    unsigned char b6 : 1;
+    unsigned char b7 : 1;
+} CfgBitsCC;
+
+typedef struct {
+    unsigned char lo : 3;
+    unsigned char mid : 4; /* 0x78 */
+    unsigned char hi : 1;
+} CfgBitsCD;
+
+typedef struct {
+    unsigned char lo : 5; /* 0x1F */
+    unsigned char hi : 3;
+} CfgBitsD6;
+
+/* record at cfg + 0x4C (offsets below are relative to the record) */
+typedef struct {
+    int f00, f04;
+    signed char f08, f09;
+    short pad0A;
+    short f0C, f0E;
+    int f10, f14, f18, f1C, f20, f24, f28, f2C, f30, f34, f38, f3C, f40, f44;
+    short f48, f4A, f4C, f4E;
+    signed char f50;
+    char pad51[3];
+    int f54, f58;
+    signed char f5C;
+    char pad5D[3];
+    int f60, f64, f68;
+    char pad6C[0x7C - 0x6C];
+} CfgRec;
+
+typedef struct {
+    char work[0x4C];
+    CfgRec rec;      /* 0x4C */
+    int fC8;
+    CfgBitsCC fCC;
+    CfgBitsCD fCD;
+    short padCE;
+    short fD0;
+    signed char fD2;
+    char padD3;
+    short fD4;
+    CfgBitsD6 fD6;
+    char padD7[0xF4 - 0xD7];
+    short fF4, fF6;
+    char padF8[8];
+    void *f100;      /* render callback (func_000007C8) */
+    char pad104[0x124 - 0x104];
+} ViewerCfg;
+
+extern ViewerCfg D_000A3F0C;
 
 /* other fields of the D_0009DB00 state blob (see file header) — declared as
  * their OWN extern symbols, not as `D_0009DB00 + offset` pointer arithmetic:
@@ -344,170 +413,90 @@ void func_0000024C(void) {
 }
 
 /* func_00000294 — init the "viewer config" blob at D_000A3F0C (font/frame
- * geometry, flags, the func_000007C8 render callback). DRAFT: field names
- * are placeholder byte offsets (`cfg[OFF]`), not yet a real struct.
- * Logic/order/values are confirmed correct against the target
- * statement-by-statement, and this version emits ALL of the target's stores
- * (13 sb / 11 sh / 14 data sw). target=116 candidate=129 words.
+ * geometry, flags, the func_000007C8 render callback), then derive its
+ * D0/D4/D6 fields from the slot cursor (D_000A3F08) and the last-picked
+ * slot (D_000A4030), clamped with the Allegrex min/max intrinsics.
+ * MATCH 100% (mwccpsp_3.0.1_219, -O4,s -sdatathreshold 0).
  *
- * The two `?:` clamps at the end are now the intrinsics
- * `__builtin_allegrex_min`/`_max` (see the file header) — that is confirmed
- * correct and is what the original wrote, worth 2 words.
- *
- * ---- 2026-08-17 investigation. SUPERSEDES the earlier "store-elimination
- * bug" theory recorded here, which did not hold up. Read this before
- * retrying so the dead ends are not walked again: ----
- *
- * The whole 13-word gap is address re-materialisation: the target keeps
- * &D_000A3F0C in $s0 and the record base ($s0 + 0x4C) in $s1 for the entire
- * function, while this version re-derives a lui/addiu pair per access
- * (lui=32 vs the target's 5).
- *
- * ROOT CAUSE. It is not a bug and not flag-specific. At -O2 and above MWCC
- * enables "copy and expression propagation" (see `mwccpsp.exe -help`, -opt
- * level=2), which propagates &D_000A3F0C as a compile-time constant into all
- * 31 use sites and re-materialises it at each one instead of keeping it live
- * in a saved register. There is no sub-option to disable propagation alone —
- * -opt exposes only `level=` and `[no]intrinsics` — so no flag fixes this
- * without regressing the 15 functions that already match.
- *
- * MEASURED, so it need not be re-derived (struct model, all stores correct):
- *  - -O4,s / -O4,p / -O4 / -O3,s : 128 words, lui=31 — IDENTICAL. The flag
- *    makes no difference to this function at all.
- *  - -O2,s : 131 words, lui=31.
- *  - -O1,s : 143 words, lui=5 — the target's cached-base shape appears, but
- *    the rest of the function is then unoptimised.
- *  - all 11 installed mwccpsp builds (121..219) at -O4,s : 128 words, lui=31.
- *    The compiler build is not the variable.
- *  - `register` on the pointers, and -inline on/all/auto/level=8/deferred:
- *    no effect. Forcing the body inline just re-exposes the constant and it
- *    folds again.
- *
- * DISPROVEN — the previous note claimed an mwccpsp store-elimination bug
- * under -O4,p that silently dropped four byte stores once two pointers shared
- * a base, and claimed a struct form reached 107 words / lui=5. Neither
- * reproduces with the layout used here: under BOTH flags all 13 sb and 11 sh
- * are emitted, and no source shape tried reached lui=5 at -O2+. If the old
- * result was real it depended on some detail of that session's struct
- * layout, not on the flag.
- *
- * THE DIAGNOSTIC THAT LOCATED IT. Written as a helper taking the blob as a
- * parameter — `void init(Cfg *cfg)` — the identical body compiles to 103
- * words with lui=4, all 13 sb / 11 sh, and a prologue matching the target
- * exactly, including `addiu <rec>, <cfg>, 0x4C` scheduled into the
- * ehsys_memset delay slot. A pointer PARAMETER cannot be re-materialised, so
- * the base stays in a saved register. The target sits symmetrically between
- * the two forms: direct = 129 (+13), parameter = 103 (-13), target = 116.
- * This is diagnostic only — the target takes no arguments, so the parameter
- * form is not itself a candidate.
- *
- * WHAT IS STILL OPEN. A no-argument source shape that denies MWCC the
- * constant while still emitting %hi/%lo of D_000A3F0C. Worth noting that the
- * target mixes two addressing modes in one function: &D_000A3F0C is a
- * relocated symbol reference (%hi/%lo), while D_0009DB00, D_000A3F08 and
- * D_000A4030 are raw absolute (`lui $v0, 0xA` / `lw $v0, -0x2500($v0)`).
- * That split may be a clue about how the original source named these.
- *
- * DECOMP-PERMUTER, tried and exhausted (2026-08-17). 337,244 iterations at
- * -j4 over 30 minutes. Best diff score 3875, down from the base 6830, but
- * nowhere near 0. Its best candidate reaches 123 words (vs this version's 129,
- * target 116) — but it gets there by emitting sb=12 / sh=12 against the
- * target's 13/11, i.e. it dropped a byte store and widened another. That is
- * semantically WRONG and was rejected. This is the expected outcome: the
- * permuter reshapes C, and every reshape still leaves &D_000A3F0C a
- * compile-time constant for the propagation pass to fold, so it cannot reach
- * the cached-base form. Do not re-run it on this function without first
- * changing something that denies the compiler that constant. The scaffold is
- * reusable for other functions (base.c / target.o / compile.sh / settings.toml;
- * note GNU `as` cannot assemble the Allegrex min/max, so target.o must emit
- * those two as .word).
- *
- * The form committed here re-materialises addresses and is 13 words over, but
- * it is CORRECT — it writes every field. Do not trade that away for a smaller
- * word count: an object missing four field writes is a worse result than a
- * NONMATCHING draft.
- *
- * ALSO ESTABLISHED (reusable): +0xCC is a BITFIELD. The target truncates the
- * source value once (`andi $a2,$zero,1`) then per field does
- * lbu / mask / shift / `or` / sb — MWCC's bitfield-insert idiom, which
- * cannot come from `(b & ~N) | (flag << k)` because MWCC folds the `or` away
- * once it sees flag == 0 (~3 words lost per field). A struct of
- * `unsigned char x : 1` fields reproduces them. Do NOT also model +0xCD as a
- * bitfield in the same struct: MWCC then merges the 0xCD insert into the
- * preceding 0xCC one and stores the result to the WRONG byte (verified in
- * isolation). +0xCD and +0xD6 take nonzero constants, so plain masking is
- * correct for them. */
+ * This was the module's holdout for a long time (docs/10 has the whole
+ * story). Three things were needed, each confirmed in isolation:
+ *  1. `int size = sizeof(*cfg); if (size != 0) memset(...)`. MWCC's copy
+ *     propagation of the constant &D_000A3F0C only rewrites uses inside the
+ *     basic block holding `cfg = &D_000A3F0C`; splitting that block with a
+ *     branch the optimiser removes later keeps the address in $s0 (and the
+ *     record base in $s1) for the whole function, as the target does,
+ *     instead of a fresh lui per store. Lever found in rel_html_view.
+ *  2. D_000A3F0C declared as the real 0x124-byte struct (not `extern char`),
+ *     otherwise four byte stores are dropped — see the ViewerCfg comment.
+ *     +0xCC/+0xCD/+0xD6 are bitfields; `flag` is the variable whose
+ *     `andi $a2,$zero,1` the target keeps.
+ *  3. The tail: one variable (`v`) first holds `y - 10`, is copied to
+ *     `lim`, and is then reused for D_000A4030. Without that reuse MWCC
+ *     colours the tail one register higher (a2/a1 instead of a1/v1) and
+ *     schedules the D0 store before the `addiu` (4 words differ). Found by
+ *     decomp-permuter on a reduced copy of the tail.
+ * Also load-bearing, oddly: the redundant `(ViewerCfg *)` cast on
+ * &D_000A3F0C. Without it the record base is re-derived as its own
+ * lui/addiu pair (`lui $s1` + `addiu $s1,$s1,0x4C+%lo`) instead of
+ * `addiu $s1,$s0,0x4C`, one word longer (117). */
 void func_00000294(void) {
-    char *cfg = &D_000A3F0C;
-    char *rec = cfg + 0x4C; /* record cleared/initialized below */
-    int flag = 0 & 1;       /* always 0 here; mirrors the asm's `andi $a2,$zero,1` */
-    unsigned char b;
-    int val_408, val_530, t0, t1;
+    ViewerCfg *cfg = (ViewerCfg *) &D_000A3F0C;
+    CfgRec *rec = &cfg->rec;
+    int size = sizeof(*cfg);
+    int flag = 0;
+    int y, v, lim;
 
-    ehsys_memset(cfg, 0, 0x124);
+    if (size != 0) {
+        ehsys_memset(cfg, 0, sizeof(*cfg));
+    }
 
-    *(int *) (cfg + 0x4C) = 1;
-    *(int *) (rec + 0x14) = 1;
-    *(int *) (rec + 0x3C) = 1;
-    *(int *) (rec + 0x2C) = 1;
-    *(int *) (rec + 0x30) = 1;
-    *(int *) (rec + 0x24) = -1;
-    *(int *) (rec + 0x54) = -1;
-    *(int *) (rec + 0x60) = -1;
-    *(short *) (rec + 0x48) = 0xC;
-    *(short *) (rec + 0x4C) = 0xC;
-    *(short *) (rec + 0x4A) = 0xC;
-    *(short *) (rec + 0x4E) = 0xC;
-    *(signed char *) (rec + 0x50) = 0xC;
-    *(signed char *) (rec + 0x5C) = 0xC;
-    *(signed char *) (rec + 0x9) = 2;
-    *(int *) (rec + 0x64) = 2;
-    *(int *) (rec + 0x68) = 2;
+    rec->f00 = 1;
+    rec->f14 = 1;
+    rec->f3C = 1;
+    rec->f2C = 1;
+    rec->f30 = 1;
+    rec->f24 = -1;
+    rec->f54 = -1;
+    rec->f60 = -1;
+    rec->f48 = 0xC;
+    rec->f4C = 0xC;
+    rec->f4A = 0xC;
+    rec->f4E = 0xC;
+    rec->f50 = 0xC;
+    rec->f5C = 0xC;
+    rec->f09 = 2;
+    rec->f64 = 2;
+    rec->f68 = 2;
 
-    *(int *) (cfg + 0xC8) = D_0009DB00;
-    b = *(unsigned char *) (cfg + 0xCC);
-    *(unsigned char *) (cfg + 0xCC) = (b & ~1) | flag;
-    b = *(unsigned char *) (cfg + 0xCC);
-    *(unsigned char *) (cfg + 0xCC) = (b & ~2) | 2;
-    b = *(unsigned char *) (cfg + 0xCC);
-    *(unsigned char *) (cfg + 0xCC) = (b & ~4) | (flag << 2);
-    b = *(unsigned char *) (cfg + 0xCC);
-    *(unsigned char *) (cfg + 0xCC) = (b & ~8) | (flag << 3);
-    b = *(unsigned char *) (cfg + 0xCC);
-    *(unsigned char *) (cfg + 0xCC) = (b & ~0x10) | (flag << 4);
-    b = *(unsigned char *) (cfg + 0xCC);
-    *(unsigned char *) (cfg + 0xCC) = (b & ~0x20) | (flag << 5);
-    b = *(unsigned char *) (cfg + 0xCD);
-    *(unsigned char *) (cfg + 0xCD) = (b & ~0x78) | 0x10;
+    cfg->fC8 = D_0009DB00;
+    cfg->fCC.b0 = flag;
+    cfg->fCC.b1 = 1;
+    cfg->fCC.b2 = flag;
+    cfg->fCC.b3 = flag;
+    cfg->fCC.b4 = flag;
+    cfg->fCC.b5 = flag;
+    cfg->fCD.mid = 2;
+    cfg->fD0 = 0xA;
+    cfg->fD2 = 0xA;
+    cfg->fF4 = 0xF0;
+    cfg->fF6 = 0x10;
+    cfg->f100 = (void *) func_000007C8;
 
-    *(short *) (cfg + 0xD0) = 0xA;
-    *(signed char *) (cfg + 0xD2) = 0xA;
-    *(short *) (cfg + 0xF4) = 0xF0;
-    *(short *) (cfg + 0xF6) = 0x10;
-    *(void (**)(void *, int, int, int)) (cfg + 0x100) = func_000007C8;
+    rec->f08 = 0;
+    rec->f0C = 0;
+    rec->f0E = 0;
+    rec->f38 = 0;
+    rec->f58 = 0;
 
-    *(signed char *) (rec + 0x8) = 0;
-    *(short *) (rec + 0xC) = 0;
-    *(short *) (rec + 0xE) = 0;
-    *(int *) (rec + 0x38) = 0;
-    *(int *) (rec + 0x58) = 0;
+    ehsys_2012884C(cfg);
 
-    ehsys_2012884C(cfg, b, flag);
-
-    /* geometry clamp: pull the two counters at D_0009DB00+0x6408/+0x6530
-     * (aka D_000A3F08 / D_000A4030 via the "middle of the blob" raw
-     * addressing spimdisasm couldn't name, see file header) and derive
-     * the config's D0/D4/D6 fields from them. */
-    val_408 = D_000A3F08;
-    val_530 = D_000A4030;
-    t0 = val_408 - 0xA;
-    *(short *) (cfg + 0xD0) = (short) val_408;
-    t0 = __builtin_allegrex_min(val_530, t0);
-    t1 = (val_530 - val_408) + 0xA;
-    *(short *) (cfg + 0xD4) = (short) t0;
-    t1 = __builtin_allegrex_max(0, t1);
-    b = *(unsigned char *) (cfg + 0xD6);
-    *(unsigned char *) (cfg + 0xD6) = (b & ~0x1F) | (t1 & 0x1F);
+    y = D_000A3F08;
+    v = y - 0xA;
+    lim = v;
+    v = D_000A4030;
+    cfg->fD0 = y;
+    cfg->fD4 = __builtin_allegrex_min(v, lim);
+    cfg->fD6.lo = __builtin_allegrex_max(0, (v - y) + 0xA);
 }
 
 /* func_00000464 — tail-calls into ehsys_E1139F1A with the config blob.
