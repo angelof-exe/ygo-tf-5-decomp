@@ -120,10 +120,79 @@ Globals referenced by the code: 47 distinct symbols, 19 of them past the end of 
 0x008FFC  jabgfisb
 ```
 
+## Decompilation status (src/rel_conv_machine.c)
+
+**60 / 62 functions match byte-for-byte** (MWCC 1.3 SP7, `-O4,s
+-sdatathreshold 0`), checked per function and again after linking the whole
+module with `make MODULE=rel_conv_machine SRC=1` (every one of the 60 is
+identical to the shipped PRX at link level). The two open ones are below;
+because they are a word too short/long, `SRC=1` does not yet print OK.
+
+| function | status | what is left |
+|---|---|---|
+| `func_000018D8` (draw, 388 words) | 387/388 | the target keeps a dead `addu $a0,$zero,$zero` at 0x1914 (the original of an instruction MWCC copied into a `bnel` delay slot). No if/else/return/switch/goto/do-while shape tried reproduces the leftover copy; rel_cardalbum's `func_00000000` has the identical artefact in the identical draw-chain opening, so it is a source idiom shared by the module family, not noise. Everything else in the function matches. |
+| `func_00001590` (message window init, 147 words) | 147/147, scheduling | same words, but the store of the text pointer (`rec->r38`) and the heap load are scheduled differently, which shifts the register choice of the bitfield inserts that follow. Same family as rel_movie_viewer's `func_00000294`. |
+
+### Structure
+
+- Exports (`libconv_machine_rel`, see `nids/modules.csv`): `func_00000810`
+  init, `func_000008EC` per-frame update (returns 1 to leave), `func_00000A10`
+  draw.
+- Main state machine (`g_work.state`, 0x7D040): 0 load (`func_00000114`, an
+  async archive loader driven by a bitfield byte at 0x9030), 1 browse
+  (`func_00000A60`), 2 card selection through the `select_card` module
+  (`func_00000CE8`), 3 model zoom (`func_00000E68`), 4 conversion screen with
+  the text list (`func_0000111C`), 5 teardown (`func_000014A8`).
+- Resources: two archives (`deck/all_%c.ehp`, `labo/conv_machine.ehp`) and
+  two id-sorted file tables (ids 0x80xx inside archive 1, 0x10xx inside
+  archive 2). `%c` is a language letter from `"jegfis"`; the two OCG pack
+  files use `"jabgfisb"[2]`.
+- 0x47D460 is a text-list widget (scroll in, wrap a UTF-16 string into rows,
+  advance a row per frame, scroll out) — functions `0x25D4`..`0x3594`.
+- Hand names proposed in `config/symbols/rel_conv_machine.extra.txt` (data
+  only; the C still uses `D_` names until that file is merged).
+
+### Codegen findings (reusable for other modules)
+
+Recorded in detail in the header of `src/rel_conv_machine.c`. Short list:
+
+1. Copy propagation of `&global` is block-local: a pointer used in the
+   same basic block as its definition is re-materialised at each use. A
+   member address with a nonzero offset (`&g.member`), a definition before a
+   branch, or a `?:` (if-converted later, costs no instructions) keeps it in
+   a register. (Same mechanism as the `if (size != 0)` trick that matched
+   rel_movie_viewer's `func_00000294`, see docs/10.)
+2. First-declared local = highest stack slot; declaration order also picks
+   which `$s` register a variable gets.
+3. A `static` callee that never writes `$a1` lets the caller keep `$a1`
+   alive across the call (`func_00000520` after `func_00000010`).
+4. Loads are not hoisted above stores into the same object: write field
+   copies in the order the target loads them.
+5. Fully-known small loops written as `for`/`while` get peeled; the target's
+   plain `b test` loop shape needs a goto-built loop (`func_00000338`).
+6. `char *` + large constant emits `lui $at` + `addu`; `int` + constant emits
+   `lui` into a temp register.
+
+### Tooling note
+
+`scripts/mwcc_diff.py` compares a candidate relocation's *symbol* address
+against the target's baked immediate and ignores the relocation addend (MIPS
+REL keeps it in the instruction's own immediate). Struct-member accesses like
+`D_0007D040.sub` therefore show up as false "baked-const check FAILED" or
+"RELOC MISMATCH (D_0007D040 vs D_7D041)" diffs. Fix: for HI16/LO16, compare
+`sym + addend` (addend = signed imm16 of the candidate LO16; for HI16 take it
+from the paired LO16) with the target; also let `func_XXXXXXXX` names resolve
+to their own address like `D_`/`jtbl_` already do (function pointers such as
+`func_00000000` passed to `ehsys_qsort` are baked as `lui 0x0`). The
+link-level check is unaffected.
+
 ## Next steps
 
-1. `splat split config/rel_conv_machine.yaml` (already run; `asm/rel_conv_machine/` is gitignored)
-2. m2c or hand-decompile the <= 16-word functions listed above into `src/rel_conv_machine.c`
-3. verify with `scripts/mwcc_build.sh` + `scripts/mwcc_diff.py` (MWCC 1.3 SP7, `-O4,s -sdatathreshold 0`)
-4. read `src/rel_movie_viewer.c` and `src/rel_html_view.c` headers first — every
-   MWCC codegen lever found so far is documented there.
+1. `func_000018D8`: find the source shape that leaves the dead
+   `addu $a0,$zero,$zero` at 0x1914 (compare rel_cardalbum `func_00000000`
+   at 0xA8, the same artefact before the same `ehsys_DFCA450B` call).
+   decomp-permuter (random mode, ~3k iterations) did not find it.
+2. `func_00001590`: the `rec->r38` store; try the "cut the region into a
+   tiny function and permute it" technique from docs/10.
+3. Merge `config/symbols/rel_conv_machine.extra.txt` (scripts/resolve_nids.py)
+   and rename the `D_` spellings in the C at the same time.

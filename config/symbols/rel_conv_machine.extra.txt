@@ -1,0 +1,41 @@
+// Hand-written symbol names for rel_conv_machine — merged into the generated
+// rel_conv_machine.txt by scripts/resolve_nids.py, which never overwrites this file.
+//
+// Convention: s_ = read-only string constant in .data, g_ = mutable global.
+// splat parses everything after `//` on a symbol line as attributes, so any
+// description has to go on its own comment line above the symbol.
+//
+// NOT YET MERGED: src/rel_conv_machine.c still spells these by address
+// (D_XXXXXXXX), which the Makefile resolves on its own; rename the C side in
+// the same change that regenerates rel_conv_machine.txt.
+
+// "jegfis": one letter per ehsys_get_language() value, fed to the %c of the
+// archive/file path formats (func_000003E4, func_00000520)
+s_lang_letters = 0x000088F0; // type:asciz size:0x8
+// {id, handle, path format} x2: 1 = "deck/all_%c.ehp", 2 = "labo/conv_machine.ehp"
+g_archives = 0x000089C8; // size:0x18
+// "deck/all_%c.ehp"
+s_deck_all_ehp = 0x000089A0; // type:asciz size:0x10
+// "labo/conv_machine.ehp"
+s_conv_machine_ehp = 0x000089B0; // type:asciz size:0x18
+// files inside archive 1, ids 0x8001..0x8045, 12-byte {id, handle, name}; qsorted then bsearched
+g_files_8000 = 0x00008C80; // size:0x1EC
+// files inside archive 2, ids 0x1001..0x1031, 16-byte records
+g_files_1000 = 0x00008F28; // size:0xC0
+// one 20-byte record (id 0xFFFF), released in func_00000338
+g_files_ffff = 0x00008FE8; // size:0x14
+// "jabgfisb": letters for the two ocg_pack{name,list}_%c.bin files (index 2 used)
+s_ocg_lang_letters = 0x00008FFC; // size:0x8
+// loader state byte: bit0 = idle/ready, bits1-7 = step (func_00000114)
+g_load_state = 0x00009030; // size:0x2
+// 0x74000-byte work buffer handed to ehsys_291D6262 (loader step 0)
+g_load_buf = 0x00009034;
+
+// main work area: state/substate bytes, message window, 3D model, heap handle
+g_work = 0x0007D040; // size:0x3D0
+// 4 MB block turned into the module heap by func_00000810
+g_heap_mem = 0x0007D410; // size:0x400000
+// render state; +0x50 is the scrolling OCG-pack list (g_list)
+g_render = 0x0047D410; // size:0x50
+g_list = 0x0047D460; // size:0x184
+
