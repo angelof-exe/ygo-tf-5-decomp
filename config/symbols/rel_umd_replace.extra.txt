@@ -1,0 +1,66 @@
+// Hand-written symbol names for rel_umd_replace -- merged into the generated
+// rel_umd_replace.txt by scripts/resolve_nids.py, which never overwrites this file.
+//
+// Convention: s_ = read-only string constant in .data, g_ = mutable global.
+// splat parses everything after `//` on a symbol line as attributes, so any
+// description has to go on its own comment line above the symbol.
+//
+// NOTE: src/rel_umd_replace.c still spells these as D_XXXXXXXX externs (the
+// Makefile PROVIDEs D_ names from the address they encode). Rename both
+// sides together once these are merged.
+
+// "UMD" -- name of the UMD callback (func_0000293C)
+s_umd_cb_name = 0x00009350; // type:asciz size:0x4
+// "disc0:" -- sceUmdActivate drive name
+s_disc0 = 0x00009354; // type:asciz size:0x7
+// "umd1:" -- raw UMD block device, sector 16 is read by func_00003014
+s_umd1 = 0x0000935C; // type:asciz size:0x6
+
+// disc ids compared against offset 0x373 of the volume descriptor (func_00003014)
+// "ULES-01474" Tag Force 5 (EU), result 0
+s_discid_tf5_eu = 0x00009364; // type:asciz size:0xB
+// "ULJM-05479" Tag Force 4 (JP), result 1
+s_discid_tf4_jp = 0x00009370; // type:asciz size:0xB
+// "ULUS-10481" Tag Force 4 (US), result 1
+s_discid_tf4_us = 0x0000937C; // type:asciz size:0xB
+// "ULES-01362" Tag Force 4 (EU), result 1
+s_discid_tf4_eu = 0x00009388; // type:asciz size:0xB
+// "ULJM-05373" Tag Force 3 (JP), result 2
+s_discid_tf3_jp = 0x00009394; // type:asciz size:0xB
+// "ULES-01183" Tag Force 3 (EU), result 2 (compared twice by the code)
+s_discid_tf3_eu = 0x000093A0; // type:asciz size:0xB
+// "ULJM-05260" Tag Force 2 (JP), result 3
+s_discid_tf2_jp = 0x000093AC; // type:asciz size:0xB
+// "ULUS-10302" Tag Force 2 (US), result 3
+s_discid_tf2_us = 0x000093B8; // type:asciz size:0xB
+// "ULES-00925" Tag Force 2 (EU), result 3
+s_discid_tf2_eu = 0x000093C4; // type:asciz size:0xB
+// "ULJM-05151" Tag Force 1 (JP), result 4
+s_discid_tf1_jp = 0x000093D0; // type:asciz size:0xB
+// "ULUS-10136" Tag Force 1 (US), result 4
+s_discid_tf1_us = 0x000093DC; // type:asciz size:0xB
+// "ULES-00600" Tag Force 1 (EU), result 4
+s_discid_tf1_eu = 0x000093E8; // type:asciz size:0xB
+
+// "basic_lang_jpn.ehp" .. "basic_lang_spa.ehp", 0x20 bytes each, indexed by
+// ehsys_get_language() (func_0000371C, archive slot 0)
+s_lang_archives = 0x000093F4; // size:0xC0
+// {char name[0x20]; int slot;} x 14: "strTbl.bin", "card.tms", ... (func_000037E4)
+g_res_table = 0x000094B4; // size:0x1F8
+// "ehp" -- resources with this extension get relocated (func_00003804)
+s_ext_ehp = 0x000096AC; // type:asciz size:0x4
+// "database/umd_replace/%s" (func_000038D0)
+s_res_path_fmt = 0x000096B0; // type:asciz size:0x18
+
+// 3rd argument of the module-registration call in func_00000000
+g_module_reg = 0x000096E0; // size:0xC
+// module active flag (func_000000E4 / func_00000118 / func_00000150)
+g_active = 0x000096EC; // type:s32 size:0x4
+// card viewer state, UmdState in src/rel_umd_replace.c
+g_card_viewer = 0x000096F0; // size:0x1CE0
+// main state machine, UmdMain (state at +0, reward list at +0x10)
+g_umd_main = 0x0000B3D0; // size:0x6F0
+// disc-swap state machine, UmdDisc (detected disc at +4)
+g_umd_disc = 0x0000BAC0; // size:0x1FC
+// sector 16 (ISO-9660 primary volume descriptor) of the inserted disc
+g_disc_pvd = 0x0000BCC0; // size:0x800

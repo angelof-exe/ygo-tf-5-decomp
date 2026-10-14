@@ -117,3 +117,87 @@ Globals referenced by the code: 63 distinct symbols, 32 of them past the end of 
 3. verify with `scripts/mwcc_build.sh` + `scripts/mwcc_diff.py` (MWCC 1.3 SP7, `-O4,s -sdatathreshold 0`)
 4. read `src/rel_movie_viewer.c` and `src/rel_html_view.c` headers first — every
    MWCC codegen lever found so far is documented there.
+
+## Decompilation status (src/rel_umd_replace.c)
+
+73 of 76 functions match byte-for-byte (MWCC 1.3 SP7, `-O4,s -sdatathreshold 0`),
+checked word by word with every relocation resolved (struct-member addends,
+baked absolute addresses, float constants by value). With all functions at
+their correct size, `make MODULE=rel_umd_replace SRC=1` links to the right
+47348 bytes and differs only inside the three NONMATCHING functions below. That
+also proves the .rodata layout trick described in the next section.
+
+| function | status | remaining difference |
+|---|---|---|
+| `func_00000DF0` | 2 words | `type`->kind mapping: the target reuses the compare constant 3 as the result with no `andi 0xff`; u8 switch adds the mask, int switch / if-chain change the layout |
+| `func_000014A0` | 2 words | scheduling of the `&eye`/`&up` argument setup before `ehsys_E2A5CE8D` (a0 vs a2 first) |
+| `func_0000255C` | 9 words | registers only: target tests the card id in `$a0` and copies it to `$s0` in a delay slot; MWCC coalesces the copy in every phrasing tried (if-chain, switch, inline helper, separate u16/int variables) |
+| all others | MATCH 100% | |
+
+### What the module does
+
+"UMD replace" is the previous-game bonus: the player swaps in a disc of an
+earlier Tag Force game, the module reads sector 16 of the raw UMD (`umd1:`),
+takes the disc ID at offset 0x373 of that ISO-9660 primary volume descriptor
+and compares it with the IDs of TF5/TF4/TF3/TF2/TF1 (`func_00003014`). Each
+game unlocks four cards (three copies each, `func_00001D98`); owning all four
+unlocks two more (`func_00002884`); an already-used or unknown disc gives one
+pseudo-random card seeded by a checksum of the volume descriptor
+(`func_00001864`). The cards are then shown in a small 3D card viewer.
+
+Disc IDs (`.data` 0x9364..0x93E8): TF5 ULES-01474 (0); TF4 ULJM-05479,
+ULUS-10481, ULES-01362 (1); TF3 ULJM-05373, ULES-01183, ULES-01183 (2; the
+third TF3 test compares the EU id a second time, a copy-paste leftover in
+the original since TF3 had no US release); TF2 ULJM-05260, ULUS-10302,
+ULES-00925 (3); TF1 ULJM-05151, ULUS-10136, ULES-00600 (4); else 5.
+
+Fixed reward card ids per game (3 copies each): TF4 0xE42, 0xE12, 0x129E,
+0x22A1; TF3 0xEA8, 0x1386, 0xFA7, 0x22A0; TF2 0x1AB2, 0x1388, 0xFF8, 0x22BC;
+TF1 0x1445, 0x1387, 0xFC9, 0x2352; all four: 0xECE, 0xE62. (The TF4 case is
+taken when `D_0000BAC0.f004 == 1`, etc.; mapping the ids to card names needs
+the card database.)
+
+No Japanese text: every string in `.data` is ASCII (file names, disc IDs,
+`database/umd_replace/%s`).
+
+### .rodata layout (needed for SRC=1)
+
+The PRX has no `.rodata`; jump tables and float constants live in `.data`
+0x9224..0x934F and the Makefile places our object's `.rodata` there NOLOAD,
+so the ORDER of our `.rodata` pieces must equal the original:
+jtbl 28C, jtbl 358, jtbl 4F4, floats of A10, floats of 730, jtbl 11BC,
+jtbl 1D98, floats of 14A0, jtbl 2A60, then the three 16-byte-aligned camera
+vectors of 14A0 at 0x9320. One MWCC translation unit emits jump tables in
+front of their function but pools float literals at the END of the unit (and
+merges duplicates), so this order cannot come from literals; the original was
+probably several source files. The source therefore defines the constants as
+file-scope `static const` arrays at the right places (MWCC emits those at the
+definition point, and the generated lui/lwc1 code is identical). Strings are
+`extern D_...` for the same reason: no `.data` may come out of our object.
+
+### Codegen lessons from this module
+
+- `switch` tests come out in reverse source order, bodies in source order;
+  trailing empty cases are needed to give a jump table its full length.
+- `if (!f()) { long } else { x = 1; }` = target's `bnel` with the assignment
+  in the delay slot (func_00001D98, func_00002A60).
+- `!!(x)` produces `sltu/xori/bnez` (func_00002EE0, func_00003284, func_000033DC).
+- func_00003284/func_000033DC: a run of `if (fd == ERR) continue;` followed
+  by the loop end makes MWCC fold the LAST test; the target keeps it. The
+  permuter found that an empty short-circuit conditional (`if (a && b) {}`,
+  any operands) right after the chain preserves it -- probably a compiled-out
+  debug macro in the original.
+- func_00001864: the "not found" tail (`id = 0x1366; found: return id;`) is a
+  `do/while` with `goto found`, which is what gives `bnel -> epilogue`.
+- Local stack slots are assigned in reverse declaration order; `Mtx` must be
+  16-byte aligned; a struct of float rows copies with lwc1/swc1 while a whole
+  64-byte struct copies with a lw/sw loop.
+
+### Tooling notes
+
+`scripts/mwcc_diff.py` reports false RELOC MISMATCHes here because the source
+uses struct globals (`D_000096F0.count` = `%lo(D_000096F0 + 0x1A10)`, which
+spimdisasm names `D_0000B100`) and compiler-local `.rodata` symbols. An exact
+checker that resolves the addends was used instead (kept outside the repo);
+a candidate improvement for the shared script is to resolve
+`symbol + addend` (REL: hi/lo pair) to an absolute address before comparing.
