@@ -72,8 +72,10 @@ Globals referenced by the code: 9 distinct symbols, 7 of them past the end of `.
 
 ## What we know now (hand analysis, 2026-08-17)
 
-**Status: 15 of 16 functions match.** See `src/rel_html_view.c` on branch
-`pr2/rel-html-view` for the full reasoning; this section is the summary.
+**Status (2026-10-14): 16 of 16 functions match, and `make MODULE=rel_html_view
+SRC=1` prints OK** (relinked module sha1 `57fbdafb…` identical to the shipped
+one). The source is `src/rel_html_view.c`; its header and per-function
+comments hold the full reasoning, this section is the summary.
 
 - **The module exports nothing.** `libhtml_view_rel` has 0 functions and 0
   variables; the syslib entry exports only `module_info` and
@@ -93,16 +95,31 @@ Globals referenced by the code: 9 distinct symbols, 7 of them past the end of `.
   `s_download_url`, `s_savedata_dir`, `g_module_reg`, `g_state`,
   `g_html_param`, `g_url_buf`, `g_dl_dir_buf`, `g_heap_ptr`, `g_heap` (the 6 MB
   block passed as `param.memaddr`).
-- **Still open:** `func_00000470` differs by a 4-word instruction *scheduling*
-  permutation and nothing else; the six `ehsys_<NID>` imports it uses are
-  unnamed, three of which are heavily used project-wide (`0x31454993` 334 call
-  sites, `0x8171F765` 288, `0xF1BC43DB` 172); and the module has never been
-  linked or checksum-verified, because the project has no build system yet.
+- **How the last two functions were matched:**
+  - `func_00000470` (fills `g_html_param`): MWCC copy-propagates the constant
+    `&g_html_param` into every store in the *basic block* that contains the
+    `p = &g_html_param` assignment, giving `lui; sw %lo(...)` for `size` and
+    `language` (+2 words). Guarding the memset with a branch on a local that is
+    only folded later (`int size = sizeof(*p); if (size != 0) memset(...)`)
+    splits the block, keeps the address in `$s0`, and leaves no trace in the
+    output. This may be the missing lever for `rel_movie_viewer`'s
+    `func_00000294` (docs/10).
+  - `func_000005A0` (per-frame viewer update): a `switch` with case order
+    1,4,2,3,0 where case 4 is `break`, not `return 0`. With `return 0`, the
+    case-1 `beq` gets converted to `beql` + `move v0,0`.
+- **Proposed names** (evidence = the SDK imports each one calls; still
+  `func_XXXXXXXX` in C and asm): `0x8C` load_net_modules, `0x134`
+  unload_net_modules, `0x178` http_init, `0x244` http_term, `0x278` net_init,
+  `0x358` net_term, `0x39C` get_viewer_language, `0x470` html_viewer_start,
+  `0x5A0` html_viewer_update, `0x650` html_view_init, `0x670` html_view_step.
+- **No Shift-JIS text** in this module: `.data` holds only the two ASCII
+  strings and the 6-entry language jump table.
 
 ## Next steps
 
-1. `splat split config/rel_html_view.yaml` (already run; `asm/rel_html_view/` is gitignored)
-2. m2c or hand-decompile the <= 16-word functions listed above into `src/rel_html_view.c`
-3. verify with `scripts/mwcc_build.sh` + `scripts/mwcc_diff.py` (MWCC 1.3 SP7, `-O4,s -sdatathreshold 0`)
-4. read `src/rel_movie_viewer.c` and `src/rel_html_view.c` headers first — every
-   MWCC codegen lever found so far is documented there.
+1. Code is done. What remains is naming: the functions above, and the unnamed
+   engine imports `ehsys_57018B7C` (fills a 0x20-byte buffer appended to
+   `/PSP/SAVEDATA/`, probably the savedata/game id) and `ehsys_08813E19`
+   (called as `(13, 0)` when the viewer exits, probably a mode switch).
+2. The import stubs, module tables and `.data` are still linked from the
+   shipped bytes, not rebuilt.
