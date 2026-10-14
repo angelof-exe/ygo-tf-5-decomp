@@ -12,3 +12,6 @@ rabbitizer==1.16.2
 # Miscellaneous utilities used by the scripts/tools
 pyelftools>=0.31   # reads ELF/PRX headers from Python
 colorama>=0.4      # colored output (asm-differ / m2c)
+# decomp-permuter (tools/decomp-permuter) needs these
+toml
+Levenshtein

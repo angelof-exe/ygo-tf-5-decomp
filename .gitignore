@@ -4,6 +4,8 @@
 *.ISO
 *.cso
 *.7z
+*.rar
+*.r[0-9][0-9]
 *.nfo
 Yu-Gi-Oh*/
 
@@ -70,3 +72,4 @@ venv/
 # Playwright MCP artifacts
 .playwright-mcp/
 *-page-*.png
+.rea_env.sh
