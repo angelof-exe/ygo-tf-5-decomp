@@ -107,7 +107,7 @@ build/$(MODULE).symbols.ld: config/symbols/$(MODULE).txt $(ASM_SRCS)
 		config/symbols/$(MODULE).txt > $@
 	@grep -ohE '\b(jtbl|D)_[0-9A-F]{4,8}\b' $(ASM_SRCS) | sort -u | awk -F_ \
 		'{ printf "PROVIDE(%s = 0x%s);\n", $$0, $$2; \
-		   p = sprintf("%s_%08X", $$1, strtonum("0x" $$2)); \
+		   p = $$1 "_" substr("00000000" $$2, length($$2) + 1); \
 		   if (p != $$0) printf "PROVIDE(%s = 0x%s);\n", p, $$2 }' >> $@
 
 build/mwcc/$(MODULE).o: src/$(MODULE).c
@@ -140,7 +140,7 @@ verify: $(BIN)
 	@expected=$$(grep -F "$(MODULE).prx" checksums.sha1 | cut -d' ' -f1); \
 	actual=$$(sha1sum $(BIN) | cut -d' ' -f1); \
 	total=$$(wc -c < $(PRX)); \
-	code=$$(readelf -SW $(PRX) | awk '$$2==".text"{print strtonum("0x" $$6)}'); \
+	code=$$(printf '%d' 0x$$(readelf -SW $(PRX) | awk '{for (i = 1; i < NF; i++) if ($$i == ".text") print $$(i + 4)}')); \
 	if [ "$$expected" != "$$actual" ]; then \
 		echo "FAIL $(MODULE).prx"; \
 		echo "  expected $$expected"; \
