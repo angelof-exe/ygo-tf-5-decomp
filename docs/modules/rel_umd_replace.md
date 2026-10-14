@@ -120,19 +120,20 @@ Globals referenced by the code: 63 distinct symbols, 32 of them past the end of 
 
 ## Decompilation status (src/rel_umd_replace.c)
 
-73 of 76 functions match byte-for-byte (MWCC 1.3 SP7, `-O4,s -sdatathreshold 0`),
+All 76 functions match byte-for-byte (MWCC 1.3 SP7, `-O4,s -sdatathreshold 0`),
 checked word by word with every relocation resolved (struct-member addends,
-baked absolute addresses, float constants by value). With all functions at
-their correct size, `make MODULE=rel_umd_replace SRC=1` links to the right
-47348 bytes and differs only inside the three NONMATCHING functions below. That
-also proves the .rodata layout trick described in the next section.
+baked absolute addresses, float constants by value), and
+`make MODULE=rel_umd_replace SRC=1` prints OK: the module relinked from our C
+is identical to the shipped PRX. That also proves the .rodata layout trick
+described in the next section.
 
-| function | status | remaining difference |
-|---|---|---|
-| `func_00000DF0` | 2 words | `type`->kind mapping: the target reuses the compare constant 3 as the result with no `andi 0xff`; u8 switch adds the mask, int switch / if-chain change the layout |
-| `func_000014A0` | 2 words | scheduling of the `&eye`/`&up` argument setup before `ehsys_E2A5CE8D` (a0 vs a2 first) |
-| `func_0000255C` | 9 words | registers only: target tests the card id in `$a0` and copies it to `$s0` in a delay slot; MWCC coalesces the copy in every phrasing tried (if-chain, switch, inline helper, separate u16/int variables) |
-| all others | MATCH 100% | |
+The last three functions needed these levers:
+
+| function | what made it match |
+|---|---|
+| `func_00000DF0` | `kind` is an `int` (a u8 adds `andi 0xff`) and `case 3: kind = 3;` comes AFTER `default:`. The target's `beq` + nop is a delay slot whose `kind = 3` was deleted as redundant (v0 already holds the compare constant 3); with case 3 earlier, the join block's `li t0,1` fills that slot instead. |
+| `func_000014A0` | the camera vectors are copied field by field (`up.x = s_cam_up.x; ...`). A whole-struct copy emits the same lwc1/swc1 pairs but MWCC then schedules the `&up`/`&at`/`&eye` argument setup right-to-left. |
+| `func_0000255C` | `ehsys_79B05ABC` takes the card id (`unsigned short`, EBOOT 0x53084: `andi a0,a0,0xFFFF`, sets bit 3 of the card's record), it is not `void`. The tests and that call use a u16 `card`, the `ehsys_EFADAB40` calls use an int copy `id`: that is the `$a0` value plus the `$s0 = $a0` copy in the first delay slot. |
 
 ### What the module does
 

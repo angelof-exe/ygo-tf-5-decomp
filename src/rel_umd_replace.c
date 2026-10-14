@@ -6,9 +6,8 @@
  * Verification: scripts/mwcc_build.sh + scripts/mwcc_diff.py, and exact
  *               word-for-word comparison with every relocation resolved
  *               (struct-member addends, baked absolute addresses and the
- *               .rodata constants by value). Functions tagged "MATCH 100%"
- *               are byte-identical; the rest are tagged NONMATCHING with the
- *               remaining difference described.
+ *               .rodata constants by value). All 76 functions are tagged
+ *               "MATCH 100%" and `make MODULE=rel_umd_replace SRC=1` is OK.
  *
  * WHAT THE MODULE DOES ("UMD replace" = previous-game disc check).
  * The player swaps the Tag Force 5 UMD for a disc of an earlier Tag Force
@@ -77,7 +76,13 @@
  *     be 16-byte aligned (func_00000A10, func_00000730);
  *   - a struct of float rows (Vec4) is copied with lwc1/swc1, a 64-byte
  *     Mtx with a lw/sw loop (func_00000988 vs func_00000730);
- *   - Allegrex min/max = __builtin_allegrex_min/max (func_00001864).
+ *   - Allegrex min/max = __builtin_allegrex_min/max (func_00001864);
+ *   - a `case` placed after `default:` moves which branch gets the
+ *     join-block delay-slot fill (func_00000DF0);
+ *   - field-by-field struct copies change the argument-setup order of the
+ *     following call (func_000014A0);
+ *   - a "void" import that really takes an argument shows up as a value kept
+ *     in $a0 with a copy to $s0: check the EBOOT body (func_0000255C).
  *
  * Japanese text: none in this module (all strings are ASCII file names,
  * disc IDs and the "database/umd_replace/%s" path).
@@ -462,7 +467,7 @@ extern int ehsys_D0FBFC51(unsigned char *);
 extern void ehsys_83B39FA9(unsigned char *);
 
 extern void ehsys_C4FA973E(int, int);
-extern void ehsys_79B05ABC(void);
+extern void ehsys_79B05ABC(unsigned short); /* sets flag 0x08 in the record of card `id` */
 extern void ehsys_EFADAB40(unsigned short, int);
 
 extern int sceKernelCreateCallback(const char *, void *, void *);
@@ -939,14 +944,14 @@ void func_00000CF0(int text) {
 }
 
 /* func_00000DF0 -- set up a 0x124-byte message box (window parameters + flags) for `text`.
- * NONMATCHING (2 words): the `type` -> kind mapping. The target reuses the
- * compare constant 3 as the result without masking it (`beq` + nop); as a
- * switch on an `unsigned char` MWCC adds `andi 0xff` in the delay slot, as
- * an int it lays the switch out differently, and the if-chain merges the
- * `type == 1` and default arms. Everything else (bitfields included) matches. */
+ * MATCH 100% (mwccpsp_3.0.1_219, -O4,s -sdatathreshold 0). `kind` must be an
+ * int (a u8 adds `andi 0xff` to the reused compare constant 3) and `case 3`
+ * must come AFTER `default`: the target's `beq` + nop for type 3 is the
+ * `kind = 3` delay-slot fill later deleted as redundant (v0 already holds 3);
+ * with case 3 before default the join block's `li t0,1` fills that slot. */
 void func_00000DF0(MsgBox *b, int text, int type, int nib, int flag) {
     MsgParam *p = &b->param;
-    unsigned char kind;
+    int kind;
 
     ehsys_memset(b, 0, sizeof(MsgBox));
     switch (type) {
@@ -956,11 +961,11 @@ void func_00000DF0(MsgBox *b, int text, int type, int nib, int flag) {
     case 2:
         kind = 4;
         break;
-    case 3:
-        kind = 3;
-        break;
     default:
         kind = 0;
+        break;
+    case 3:
+        kind = 3;
         break;
     }
     p->f00 = 1;
@@ -1160,10 +1165,10 @@ void func_00001330(void) {
 }
 
 /* func_000014A0 -- 3D scene setup: render state chain, perspective and the look-at camera.
- * NONMATCHING (2 words): only the scheduling of the `&eye`/`&up` argument
- * setup before ehsys_E2A5CE8D differs (a0 vs a2 first); every other word
- * and the stack layout match. Tried every declaration/copy order and an
- * array form. */
+ * MATCH 100% (mwccpsp_3.0.1_219, -O4,s -sdatathreshold 0). The camera
+ * vectors are copied FIELD BY FIELD: a whole-struct `up = s_cam_up;` emits the
+ * same lwc1/swc1 pairs but MWCC then schedules the `&up`/`&at`/`&eye` argument
+ * setup right-to-left (a2 first); field copies give the target's a0 first. */
 int func_000014A0(int h) {
     Vec4 eye;
     Vec4 at;
@@ -1201,9 +1206,18 @@ int func_000014A0(int h) {
     h = ehsys_D71FA940(h);
     r = ehsys_94982653(h, 0);
     ehsys_4F22C9AA(1);
-    up = s_cam_up;
-    at = s_cam_at;
-    eye = s_cam_eye;
+    up.x = s_cam_up.x;
+    up.y = s_cam_up.y;
+    up.z = s_cam_up.z;
+    up.w = s_cam_up.w;
+    at.x = s_cam_at.x;
+    at.y = s_cam_at.y;
+    at.z = s_cam_at.z;
+    at.w = s_cam_at.w;
+    eye.x = s_cam_eye.x;
+    eye.y = s_cam_eye.y;
+    eye.z = s_cam_eye.z;
+    eye.w = s_cam_eye.w;
     ehsys_E2A5CE8D(&eye, &at, &up);
     ehsys_D1C6F209();
     ehsys_4F22C9AA(2);
@@ -1553,23 +1567,28 @@ void func_00002514(void) {
 }
 
 /* func_0000255C -- state 12: show reward `cur` and add its copies to the collection; some
- * cards also unlock something through ehsys_EFADAB40.
- * NONMATCHING (9 words, registers only): the target tests the card id in
- * $a0 and copies it to $s0 in the first delay slot; this version loads it
- * straight into $s0. Same instructions otherwise. */
+ * cards also get a flag (ehsys_79B05ABC) and unlock something through ehsys_EFADAB40.
+ * MATCH 100% (mwccpsp_3.0.1_219, -O4,s -sdatathreshold 0). ehsys_79B05ABC takes the
+ * card id as an `unsigned short` (EBOOT 0x53084: `andi a0,a0,0xFFFF`, then sets bit 3
+ * of the card record), it is not void. Testing and passing the u16 `card` while the
+ * other calls use the int copy `id` is what keeps the value in $a0 for the tests and
+ * the call, with the `$s0 = $a0` copy in the first delay slot. */
 void func_0000255C(void) {
     UmdMain *m = &D_0000B3D0;
     int i;
     int id;
     int n;
+    unsigned short card;
 
     func_000004F4(D_0000B3D0.list[D_0000B3D0.cur].id, D_0000B3D0.list[D_0000B3D0.cur].num);
     D_0000B3D0.state = 13;
     for (i = 0; i < m->list[m->cur].num; i++) {
         ehsys_C4FA973E(m->list[m->cur].id, 1);
-        if ((id = m->list[m->cur].id) == 0x1386 || id == 0xFA7 || id == 0xFC9 || id == 0x129E || id == 0x1296 ||
-            id == 0xFF8 || id == 0x1388) {
-            ehsys_79B05ABC();
+        card = m->list[m->cur].id;
+        id = card;
+        if (card == 0x1386 || card == 0xFA7 || card == 0xFC9 || card == 0x129E || card == 0x1296 ||
+            card == 0xFF8 || card == 0x1388) {
+            ehsys_79B05ABC(card);
             ehsys_EFADAB40(id, 1);
             n = 0;
             switch (id) {
