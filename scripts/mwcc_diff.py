@@ -153,6 +153,13 @@ def compare(tgt, cand, name):
                 if (tsym != csym or tkind != ckind) and not same_target(tw, cw, tsym, csym, tkind, ckind):
                     diffs.append(f"  [{i}] RELOC MISMATCH target={tmnem} {top} ({tkind} {tsym}) "
                                  f"vs candidate={cmnem} {cop} ({ckind} {csym})")
+                    continue
+                # the relocation only owns the immediate field: opcode and
+                # registers must still be identical
+                keep = 0xFC000000 if tkind == "26" else 0xFFFF0000
+                if (tword & keep) != (cword & keep):
+                    diffs.append(f"  [{i}] target=0x{tword:08x} ({tmnem} {top})  "
+                                 f"candidate=0x{cword:08x} ({cmnem} {cop})  [same reloc, different insn/regs]")
                 continue
             if csym is not None:  # only candidate has a reloc: check known-address bake-in
                 addr = KNOWN_ADDR.get(csym)
