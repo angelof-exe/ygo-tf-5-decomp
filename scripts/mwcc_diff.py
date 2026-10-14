@@ -41,6 +41,42 @@ def norm_sym(s):
     return s
 
 
+def addr_of(sym):
+    """Address a D_/jtbl_/func_ name encodes, or a KNOWN_ADDR entry."""
+    if sym in KNOWN_ADDR:
+        return KNOWN_ADDR[sym]
+    m = re.fullmatch(r"(?:D|jtbl|func)_([0-9A-F]{4,8})", sym or "")
+    return int(m.group(1), 16) if m else None
+
+
+def same_target(tw, cw, tsym, csym, tkind, ckind):
+    """Two relocated words with DIFFERENT symbol names that still mean the same thing.
+
+    - A struct member: our object says `D_0000AE18` with the field offset in
+      the immediate, splat names the field's own address `D_0000AE1C`. The
+      shipped word carries the real address (modules are linked at base 0),
+      so check our base + addend against it.
+    - A switch jump table: MWCC emits an anonymous `@NNN` (or a .rodata
+      section-relative reloc), splat calls it `jtbl_XXXXXXXX`. Its placement
+      and contents are proven by `make SRC=1`, not here.
+    """
+    if tkind != ckind:
+        return False
+    if tsym.startswith("jtbl_") and (csym.startswith("@") or csym.startswith(".rodata")):
+        return True
+    taddr, caddr = addr_of(tsym), addr_of(csym)
+    if taddr is None or caddr is None:
+        return False
+    timm, cimm = tw[0] & 0xFFFF, cw[0] & 0xFFFF
+    if tkind == "LO16":
+        return (caddr + cimm) & 0xFFFF == timm
+    if tkind == "HI16":
+        # the addend sits in the paired LO16; any field within +-32 KiB of
+        # the base gives one of these two %hi values
+        return timm in {((caddr + off + 0x8000) >> 16) & 0xFFFF for off in (-0x8000, 0, 0x7FFF)}
+    return False
+
+
 def parse_target(path):
     funcs = {}
     cur = None
@@ -114,22 +150,32 @@ def compare(tgt, cand, name):
         tsym, csym = norm_sym(tsym), norm_sym(csym)
         if tsym is not None or csym is not None:
             if tsym is not None and csym is not None:
-                if tsym != csym or tkind != ckind:
+                if (tsym != csym or tkind != ckind) and not same_target(tw, cw, tsym, csym, tkind, ckind):
                     diffs.append(f"  [{i}] RELOC MISMATCH target={tmnem} {top} ({tkind} {tsym}) "
                                  f"vs candidate={cmnem} {cop} ({ckind} {csym})")
                 continue
             if csym is not None:  # only candidate has a reloc: check known-address bake-in
                 addr = KNOWN_ADDR.get(csym)
                 if addr is None:
+                    # D_XXXXXXXX / jtbl_XXXXXXXX name their own address, which
+                    # is exactly what the Makefile's PROVIDE()s rely on too.
+                    m = re.fullmatch(r"(?:D|jtbl)_([0-9A-F]{4,8})", csym)
+                    addr = int(m.group(1), 16) if m else None
+                if addr is None:
                     diffs.append(f"  [{i}] candidate has reloc {ckind} {csym} (unknown addr) but "
                                  f"target raw word=0x{tword:08x} {tmnem} {top}")
                     continue
-                hi = (addr + 0x8000) >> 16 & 0xFFFF
-                lo = addr & 0xFFFF
-                if lo >= 0x8000:
-                    lo -= 0x10000
-                expect = hi if ckind == "HI16" else (lo & 0xFFFF)
-                if expect != (tword & 0xFFFF):
+                # our immediate is the field offset off that symbol (struct
+                # member); the HI16 half's addend lives in its paired LO16
+                cimm = cword & 0xFFFF
+                if ckind == "HI16":
+                    ok = (tword & 0xFFFF) in {((addr + off + 0x8000) >> 16) & 0xFFFF
+                                              for off in (-0x8000, 0, 0x7FFF)}
+                    expect = (addr + 0x8000) >> 16 & 0xFFFF
+                else:
+                    expect = (addr + cimm) & 0xFFFF
+                    ok = expect == (tword & 0xFFFF)
+                if not ok:
                     diffs.append(f"  [{i}] baked-const check FAILED target=0x{tword:08x} "
                                  f"expect_imm=0x{expect:04x} (candidate reloc {ckind} {csym}=0x{addr:08x})")
                 continue
