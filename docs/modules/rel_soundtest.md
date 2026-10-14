@@ -70,6 +70,72 @@ Globals referenced by the code: 37 distinct symbols, 21 of them past the end of 
 0x006928  .bin
 ```
 
+## Decompilation status
+
+`src/rel_soundtest.c` — all 12 functions written; verified per function with
+`scripts/mwcc_build.sh` + `scripts/mwcc_diff.py` and by relinking
+(`make MODULE=rel_soundtest SRC=1`, comparing the linked `.text` per function).
+**12/12 MATCH.** `make MODULE=rel_soundtest SRC=1` prints OK (sha1
+`a62d1813be28...`): every byte of `.text` comes from the compiled C.
+
+| function | words | role (proposed name) | status |
+|---|---|---|---|
+| `func_00000000` | 2 | returns 0 (unknown callback) | MATCH |
+| `func_00000008` | 61 | init: clear state, get/alloc 3 MB work heap (`soundtest_init`) | MATCH |
+| `func_000000FC` | 78 | per-frame update, state machine 0..4 (`soundtest_update`) | MATCH |
+| `func_00000234` | 2 | per-frame draw, tail call to `func_00000908` (`soundtest_draw`) | MATCH |
+| `func_0000023C` | 17 | shutdown: free archive + own heap (`soundtest_exit`) | MATCH |
+| `func_00000280` | 139 | load `database/soundtest.ehp`, `strTbl_<lang>.bin`, unlock flags (`soundtest_load`) | MATCH |
+| `func_000004AC` | 279 | menu input + auto-advance (`soundtest_menu`) | MATCH |
+| `func_00000908` | 701 | render (`soundtest_render`) | MATCH |
+| `func_000013FC` | 5 | draw a string, coords in 26.6 fixed point (`soundtest_draw_text`) | MATCH |
+| `func_00001410` | 31 | draw one textured sprite (`soundtest_draw_sprite`) | MATCH |
+| `func_0000148C` | 75 | stop current BGM, start another, wait (`soundtest_change_bgm`) | MATCH |
+| `func_000015B8` | 12 | release the archive (`soundtest_release`) | MATCH |
+
+What the module is: the Sound Test screen. 41 BGM tracks (`g_bgm_ids`,
+0x6820), 8 visible rows, scroll 0..0x21; up/down move the cursor (key repeat),
+left/right page by 8, L/R (`0x300`) toggle auto-advance, confirm plays the
+highlighted track if `ehsys_251128FD(id)` says it is available, cancel closes
+the PDA animation and exits. All state is one 0xF4-byte struct at 0x6960
+(`struct SoundTest` in the source; hand names in
+`config/symbols/rel_soundtest.extra.txt`).
+
+No Shift-JIS text exists in this module: the `.data` strings are ASCII file
+names, and the language suffix table at 0x67D4 is `"j","e","g","f","i","s"`.
+Track titles live in `strTbl_<lang>.bin` inside `soundtest.ehp`
+(string ids 0x55+n for list rows, 0x2B+n / n+1 for the selected track, 0x83
+title, 0x82/0x54/0x2A placeholders for locked tracks).
+
+Codegen notes found here (reusable):
+- `while ((f(x) != 0) ^ 1)` is the source shape for MWCC's
+  `sltu v0,zero,v0; xori v0,v0,1; bnez` loop test; `== 0`, `!`, `!(.. != 0)`
+  all fold to a plain `beqz` (func_0000148C, func_000004AC).
+- `if (a < 0 || a >= 6) a = 0;` gives the `bltzl`-with-store-in-slot + `slti`
+  shape; the equivalent `else if` chain does not (func_00000280).
+- local aggregate copy from a `.data` template (`blink = D_00006930`) gives
+  the 4x(lw,lw,sw,sw) copy loop; frame layout follows declaration order
+  (the 0x60-byte memset buffer is really 27 ints: there is a 12-byte gap).
+- float literals live in a pool at the start of `.data` (0x67C4..0x67CC);
+  declare them `extern float` so the object does not emit its own pool.
+- `(unsigned int)(255.0f * f)` is MWCC's float->u32 (c.le.s 2^31 / sub / or).
+- MWCC fills the delay slot of a branch to the shared `li v0,1; epilogue`
+  block by stealing that `li` (`bnezl`/`beql` ... `li v0,1`) for only ONE
+  branch per target: the first one in layout order that has an empty slot.
+  Later branches to it get a `nop`. An explicit `return 1;` emits its own
+  `b epilogue; li v0,1`, which looks the same as a steal but does not use
+  up the one steal. So a `nop` where you expect a steal means an EARLIER
+  `return 1` was really a fall-through to the common return
+  (func_000004AC: drop the `return 1` after the "locked" sound).
+- Saved-register order between two long-lived scalars that seems fixed by the
+  source can be flipped by putting both in ONE local aggregate
+  (`struct { int i; int yofs; } t;` or `int v[2]`). MWCC promotes the
+  fields to registers but colours them in a different order. Found by
+  cut-out permuting: a 40-line `f()` with the same live ranges, and a target
+  made by swapping the $s2/$s3 fields of our own `.o`. Score 0 in ~2000
+  iterations; transplanted 1:1 (func_00000908). One field alone in an array
+  does not work. Both fields must be in it, in either order.
+
 ## Next steps
 
 1. `splat split config/rel_soundtest.yaml` (already run; `asm/rel_soundtest/` is gitignored)

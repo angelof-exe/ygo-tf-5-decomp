@@ -1,0 +1,45 @@
+// Hand-written symbol names for rel_soundtest — merged into the generated
+// rel_soundtest.txt by scripts/resolve_nids.py, which never overwrites this file.
+//
+// Convention: s_ = read-only string constant in .data, g_ = mutable global.
+// splat parses everything after `//` on a symbol line as attributes, so any
+// description has to go on its own comment line above the symbol.
+//
+// Function names are deliberately NOT given here (scripts/mwcc_diff.py keys on
+// func_XXXXXXXX labels); the proposed ones are in the comments of
+// src/rel_soundtest.c and docs/modules/rel_soundtest.md.
+
+// MWCC literal pool (no .rodata in this module): 33.17073f, 4.146341f, 2*pi
+f_scrollbar_knob_h = 0x000067C4; // type:f32 size:0x4
+f_scrollbar_step = 0x000067C8; // type:f32 size:0x4
+f_two_pi = 0x000067CC; // type:f32 size:0x4
+// "" (name passed to the heap allocator in func_00000008)
+s_empty = 0x000067D0; // type:asciz size:0x4
+// "j","e","g","f","i","s": strTbl_ language suffixes, indexed by ehsys_get_language()
+s_lang_suffix = 0x000067D4; // size:0xC
+// 61-byte alpha pulse for the cursor highlight, indexed by frame % 61
+g_cursor_alpha = 0x000067E0; // size:0x3D
+// the 41 BGM ids of the track list
+g_bgm_ids = 0x00006820; // size:0xA4
+// "database/soundtest.ehp"
+s_soundtest_ehp = 0x000068C4; // type:asciz size:0x18
+// "sound.gim"
+s_sound_gim = 0x000068DC; // type:asciz size:0xC
+// "bg.ehf"
+s_bg_ehf = 0x000068E8; // type:asciz size:0x8
+// "bg.tmf"
+s_bg_tmf = 0x000068F0; // type:asciz size:0x8
+// "soundpda.ehf"
+s_soundpda_ehf = 0x000068F8; // type:asciz size:0x10
+// "soundpda.tmf"
+s_soundpda_tmf = 0x00006908; // type:asciz size:0x10
+// "%s%s%s"
+s_fmt_strtbl = 0x00006918; // type:asciz size:0x8
+// "strTbl_"
+s_strtbl_prefix = 0x00006920; // type:asciz size:0x8
+// ".bin"
+s_bin_ext = 0x00006928; // type:asciz size:0x8
+// now-playing icon animation: 4 x {u, v}
+g_playing_icon_uv = 0x00006930; // size:0x20
+// the whole screen state (struct SoundTest in src/rel_soundtest.c), zeroed by func_00000008
+g_soundtest = 0x00006960; // size:0xF4
