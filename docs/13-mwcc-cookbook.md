@@ -70,6 +70,20 @@ comment in `src/` has the full story. Read this before fighting a diff.
 - Globals are **not** volatile everywhere: some modules need `volatile`
   casts on exactly the accesses the target re-reads. (rel_debug_menu)
 
+## Prototypes of engine imports
+
+- **Check the real prototype in the EBOOT before blaming register
+  allocation.** `ehsys_79B05ABC` starts with `andi a0,a0,0xFFFF`, so it takes an
+  `unsigned short`; declaring it right made a 9-word "register-only" diff
+  vanish (rel_umd_replace func_0000255C). Look up the export's address in
+  `nids/ehsys.csv` and read it with
+  `rea decompile $PWD/build/rea/EBOOT.elf 0xADDR --provider ghidra` or
+  `mips-linux-gnu-objdump` on `build/EBOOT.elf`.
+- Copying a struct field by field vs as a whole changes the order MWCC sets up
+  later `&local` arguments (rel_umd_replace func_000014A0).
+- A `case` placed after `default:` can be what deletes a redundant delay-slot
+  assignment (rel_umd_replace func_00000DF0).
+
 ## Data the C must not emit
 
 `make SRC=1` links `.data` verbatim from the shipped module, so the object
