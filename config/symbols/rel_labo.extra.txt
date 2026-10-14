@@ -1,0 +1,74 @@
+// Hand-written symbol names for rel_labo — merged into the generated
+// rel_labo.txt by scripts/resolve_nids.py, which never overwrites this file.
+//
+// Convention: s_ = read-only string constant in .data, g_ = mutable global.
+// splat parses everything after `//` on a symbol line as attributes, so any
+// description has to go on its own comment line above the symbol.
+//
+// Function names are deliberately NOT given here (scripts/mwcc_diff.py keys on
+// func_XXXXXXXX labels); the proposed ones are in the comments of
+// src/rel_labo.c and docs/modules/rel_labo.md.
+//
+// NOTE: src/rel_labo.c still spells these D_XXXXXXXX, matching the current
+// asm/rel_labo. When rel_labo.txt is regenerated and the module re-split, rename
+// the externs in src/rel_labo.c in the same change, or mwcc_diff.py will report
+// relocation-name diffs. The "field alias" entries (g_voicetest_chr_id and the
+// other g_voicetest_* entries) are fields of g_voicetest that the code also
+// relocates against directly.
+
+// [12] module id per menu entry, loaded with ehsys_597CDADD (func_00000034)
+g_labo_module_ids = 0x00006820; // size:0x30
+// [15] draw routine per hub state, NULL = clear only (func_00000984)
+g_labo_draw_funcs = 0x00006850; // size:0x3C
+// 12 menu labels, 0x40 bytes each ("Password Machine" ... "Voice & Subtitle")
+s_labo_menu_labels = 0x0000688C; // size:0x300
+// "Labo Debug Menu"
+s_labo_title = 0x00006B8C; // type:asciz size:0x10
+// SJIS U+25C6 black diamond, the menu cursor
+s_menu_cursor = 0x00006B9C; // type:asciz size:0x4
+// "labo/voicetest.ehp"
+s_voicetest_ehp = 0x00006BA0; // type:asciz size:0x14
+// "ChrID : %03d - "
+s_fmt_chr_id = 0x00006BB4; // type:asciz size:0x10
+// "SubID : %1d"
+s_fmt_sub_id = 0x00006BC4; // type:asciz size:0xC
+// "VOICE : %03d : %s"
+s_fmt_voice = 0x00006BD0; // type:asciz size:0x14
+// pointers to the three formats above (read as variables by func_00001180)
+g_fmt_chr_id = 0x00006BE4; // type:u32 size:0x4
+g_fmt_sub_id = 0x00006BE8; // type:u32 size:0x4
+g_fmt_voice = 0x00006BEC; // type:u32 size:0x4
+// [318] pointers to the stringified ID_VCM_* voice enum (names + SJIS comments)
+g_voice_id_names = 0x0000A868; // size:0x4F8
+// "jegfis": per-language file suffix, indexed by ehsys_get_language()
+s_lang_suffix = 0x0000AD60; // size:0x8
+// "chr"
+s_chr_prefix = 0x0000AD68; // type:asciz size:0x4
+// "chrzakov%2d"
+s_fmt_zako_voice = 0x0000AD6C; // type:asciz size:0xC
+// "%s_voiceidchgtbl.bin"
+s_fmt_voiceidchgtbl = 0x0000AD78; // type:asciz size:0x18
+// "%s_wordstbl_%c.bin"
+s_fmt_wordstbl = 0x0000AD90; // type:asciz size:0x14
+// SJIS "line ID : %d"
+s_fmt_line_id = 0x0000ADA4; // type:asciz size:0xC
+// SJIS U+25C7 white diamond, the voice-test row cursor
+s_row_cursor = 0x0000ADB0; // type:asciz size:0x4
+// SJIS help line "O: play  X: back  L: -10  R: +10"
+s_voicetest_help = 0x0000ADB4; // type:asciz size:0x2C
+
+// .bss: hub state block, 0x1C bytes zeroed by func_00000034
+g_labo_state = 0x0000ADF0; // type:s32 size:0x4
+g_labo_phase = 0x0000ADF4; // type:s32 size:0x4
+g_labo_cursor = 0x0000ADF8; // type:s32 size:0x4
+g_labo_module_id = 0x0000ADFC; // type:s32 size:0x4
+// 3rd argument of the module-registration call in func_00000000
+g_module_reg = 0x0000AE0C; // size:0xC
+// voice-test state (struct VoiceTest in src/rel_labo.c), 0x1C bytes
+g_voicetest = 0x0000AE18; // size:0x4
+g_voicetest_chr_id = 0x0000AE1C; // type:s32 size:0x4
+g_voicetest_sub_id = 0x0000AE20; // type:s32 size:0x4
+g_voicetest_voice_idx = 0x0000AE24; // type:s32 size:0x4
+g_voicetest_work_ptr = 0x0000AE30; // type:u32 size:0x4
+// buffer the voicetest archive is loaded into
+g_voicetest_work = 0x0000AE40;

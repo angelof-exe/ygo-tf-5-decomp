@@ -132,10 +132,66 @@ Globals referenced by the code: 29 distinct symbols, 11 of them past the end of 
 0x00745C  ID_VCM_INVPRE_A_2,              //
 ```
 
-## Next steps
+## Decompilation status
 
-1. `splat split config/rel_labo.yaml` (already run; `asm/rel_labo/` is gitignored)
-2. m2c or hand-decompile the <= 16-word functions listed above into `src/rel_labo.c`
-3. verify with `scripts/mwcc_build.sh` + `scripts/mwcc_diff.py` (MWCC 1.3 SP7, `-O4,s -sdatathreshold 0`)
-4. read `src/rel_movie_viewer.c` and `src/rel_html_view.c` headers first — every
-   MWCC codegen lever found so far is documented there.
+`src/rel_labo.c`: **14/14 functions byte-identical**, and
+`make MODULE=rel_labo SRC=1` prints OK (sha1 `1a0b57a3...`). 12 functions are
+clean in `scripts/mwcc_diff.py`; two show only relocation-*name* differences
+the tool cannot see through (details in the source):
+
+| function | words | status | proposed name / role |
+|---|---|---|---|
+| `func_00000000` | 13 | MATCH | module entry (registers main + teardown) |
+| `func_00000034` | 594 | MATCH (SRC=1); 2 reloc-name diffs: jump table is `@NNN` in our .o, `jtbl_000067E4` in the asm | `labo_main`: hub state machine, launches 9 other gmodules |
+| `func_0000097C` | 2 | MATCH | empty teardown hook |
+| `func_00000984` | 34 | MATCH | per-frame draw dispatcher (`g_labo_draw_funcs[state]`) |
+| `func_00000A0C` | 2 | MATCH | empty callback |
+| `func_00000A14` | 81 | MATCH | `labo_draw_menu` |
+| `func_00000B58` | 28 | MATCH | `voicetest_init` (loads `labo/voicetest.ehp`) |
+| `func_00000BC8` | 190 | MATCH (SRC=1); 8 reloc-name diffs: `D_0000AE18+4` vs `D_0000AE1C`, same address | `voicetest_update` (input, play line) |
+| `func_00000EC0` | 30 | MATCH | `voicetest_draw_chara_name` |
+| `func_00000F38` | 8 | MATCH | draw text to right screen edge (same as rel_movie_viewer `func_00000894`) |
+| `func_00000F58` | 131 | MATCH | `voicetest_draw_subtitle` (loads `*_voiceidchgtbl.bin`, `*_wordstbl_<lang>.bin`) |
+| `func_00001164` | 7 | MATCH | draw text in a box |
+| `func_00001180` | 73 | MATCH | `voicetest_draw` |
+| `func_000012A4` | 17 | MATCH | `voicetest_get_voice_id` |
+
+What the module is: the "Labo" hub, a debug-style menu of 12 entries. Entries
+0..10 load another gmodule by id (`D_00006820[cursor]`, via
+`ehsys_597CDADD`) and drive it through its start/update exports
+(`password_*`, `select_card_*` in modes 0 and 2, `conv_machine_*`,
+`deck_swap_*`, `cardalbum_*`, `charalist_*` in modes 0 and 3,
+`duelrecord_*`, `limitlist_*`, `tutoriallist_*`). Entry 11, "Voice &
+Subtitle", is an in-module test screen: pick a character id (0..0x60), sub id
+(0..3) and one of 318 voice lines, play it, and preview its subtitle in the
+current language (`"jegfis"[ehsys_get_language()]`).
+
+Codegen findings (all in the `src/rel_labo.c` header):
+
+- **One struct vs separate globals changes alias analysis.** The voice-test
+  state must be one struct object. A store to `val[sel]` then may alias
+  `.sel`, so MWCC reloads both after each store, which is what the target
+  does. With separate `sel`/`val[]` globals the function is 11 words short. A
+  pointer cast of the global is not equivalent.
+- An early `return 0` vs falling through to the shared `return 0` decides
+  which later branch to that tail gets a branch-likely delay-slot fill.
+- Declaration order of locals sets stack-slot order and `$s0`/`$s1`
+  assignment.
+- `if (a == 0 || b == 0) return;` and two separate `if`s give different
+  layouts.
+
+Proposed fixes to `scripts/mwcc_diff.py` (not applied: outside this module's
+files): (1) treat a candidate relocation against a compiler-local `@N`
+symbol in `.rodata` as equal to the target's `jtbl_XXXXXXXX`, and check the
+table words; (2) compare `D_XXXXXXXX` relocations by resolved address
+(symbol + the addend in the HI16/LO16 immediates), so a struct member and
+splat's per-address name compare equal.
+
+Japanese text: 307 Shift-JIS strings, all in `.data`. Nearly all of them are
+the comments of a stringified C enum, `ID_VCM_* //<comment>`, 318 voice-line
+categories (for example 開幕の口上 = "opening speech", ターンコール:余裕1 =
+"turn call: confident 1", ピンチ = "in a pinch", タッグ用 = "for tag duels").
+The code uses only four of them: the cursors ◆/◇, `台詞ID : %d` ("line ID")
+and the help line `○：再生　×：戻る　Ｌ：－１０　Ｒ：＋１０` ("O: play,
+X: back, L: -10, R: +10"). They are referenced as `extern` data, never as
+literals.
