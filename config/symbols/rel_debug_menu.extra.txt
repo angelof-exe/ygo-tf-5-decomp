@@ -1,0 +1,66 @@
+// Hand-written symbol names for rel_debug_menu - merged into the generated
+// rel_debug_menu.txt by scripts/resolve_nids.py, which never overwrites this file.
+//
+// Convention: s_ = read-only string/table in .data, g_ = mutable global.
+// Evidence for each name is in the comments of src/rel_debug_menu.c.
+// NOTE: src/rel_debug_menu.c still spells these as D_XXXXXXXX (the Makefile
+// and mwcc_diff.py derive addresses from those names); rename the C side in
+// the same change that regenerates rel_debug_menu.txt and re-runs splat.
+// Japanese strings: names are ASCII translations, never the Japanese text.
+
+// language codes, 8 bytes each: "JPN","ENG","GER","FRA","ITA","SPA"
+s_language_names = 0x000091E0; // size:0x30
+// region names, 8 bytes each: "JAPAN","U.S.A.","Europe" x6
+s_region_names = 0x00009210; // size:0x40
+// DEBUG OPTION rows, 32 bytes each: "language" .. "Sale Zone"
+s_option_names = 0x00009250; // size:0x100
+// SOUND TEST row labels, 32 bytes each: "BGM: " .. "VOLUME VOICE: "
+s_sound_test_labels = 0x00009350; // size:0x140
+// "SEPAC_STATIC","SEPAC_DUEL","SEPAC_VS","SEPAC_STORY", 32 bytes each
+s_sound_pack_names = 0x00009490; // size:0x80
+// built-in test menu: 16 x {jp name, en name, handler, arg0, arg1} + terminator
+g_menu_entries = 0x000098B0; // size:0x154
+// "debug_menu.c" (the __FILE__ passed to func_00000C04)
+s_debug_menu_c = 0x00009A04; // type:asciz size:0x10
+// "YUGI OH 5Ds -TAGFORCE-  TEST MODE\n"
+s_test_mode_title = 0x00009A14; // type:asciz size:0x24
+// Shift-JIS, translated: "... is applying to join."
+s_msg_applying_to_join = 0x00009BEC; // type:asciz size:0x1C
+// Shift-JIS, translated: "Deck select"
+s_deck_select = 0x00009C08; // type:asciz size:0xC
+// Shift-JIS, translated: "Could not join."
+s_msg_join_failed = 0x00009C28; // type:asciz size:0x18
+// Shift-JIS, translated: "Could not confirm the duel members."
+s_msg_members_unconfirmed = 0x00009C40; // type:asciz size:0x28
+// Shift-JIS, translated: "Disbanding the group."
+s_msg_group_disbanded = 0x00009C68; // type:asciz size:0x18
+
+// menu state machine word (0..8, 0x5A..0x5C, 0x63, 0xC7), func_00000034
+g_menu_state = 0x00009C90; // type:s32 size:0x4
+// first visible menu row
+g_menu_scroll = 0x00009C94; // type:s32 size:0x4
+// cursor row, shared by every page
+g_menu_cursor = 0x00009C98; // type:s32 size:0x4
+// fade level 0..7
+g_fade_level = 0x00009C9C; // type:s32 size:0x4
+// frames drawn by func_000002DC; bit 3 drives the cursor blink
+g_frame_count = 0x00009CA4; // type:s32 size:0x4
+// SOUND TEST values: BGM, SE PACK, SE, NPC, NPC-OFS, DUEL VOICE, TITLE VOICE
+g_sound_test_values = 0x00009CAC; // size:0x1C
+// duel-voice sound pack currently loaded by SOUND TEST
+g_loaded_voice_pack = 0x00009CD8; // type:s32 size:0x4
+// title-voice sound pack currently loaded by SOUND TEST
+g_loaded_title_voice_pack = 0x00009CDC; // type:s32 size:0x4
+// heap handle from ehsys_1856E536(&g_heap_arena, 0x800000)
+g_heap = 0x00009CE4; // type:s32 size:0x4
+// 8 MiB heap arena
+g_heap_arena = 0x00009CF0; // size:0x800000
+// MenuEntry table in use, and its entry count
+g_menu_table = 0x00809CF0; // type:u32 size:0x4
+g_menu_count = 0x00809CF4; // type:s32 size:0x4
+// 3rd argument of the module-registration call in func_00000000
+g_module_reg = 0x00809CF8; // size:0xC
+// delivery-test state block, cleared by func_0000206C
+g_delivery = 0x00809D04; // size:0xE98
+// matching-test state block, cleared by func_000028BC
+g_matching = 0x0080AB9C; // size:0xE90
