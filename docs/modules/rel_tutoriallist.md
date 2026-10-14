@@ -72,3 +72,48 @@ Globals referenced by the code: 20 distinct symbols, 16 of them past the end of 
 3. verify with `scripts/mwcc_build.sh` + `scripts/mwcc_diff.py` (MWCC 1.3 SP7, `-O4,s -sdatathreshold 0`)
 4. read `src/rel_movie_viewer.c` and `src/rel_html_view.c` headers first — every
    MWCC codegen lever found so far is documented there.
+
+## Decompilation status (src/rel_tutoriallist.c)
+
+25 of 31 functions are byte-identical (`scripts/mwcc_diff.py`, MWCC 1.3 SP7,
+`-O4,s -sdatathreshold 0`). `make MODULE=rel_tutoriallist SRC=1` still fails:
+two drafts differ in size, which shifts all later addresses.
+
+| function | role (proposed name) | status |
+|---|---|---|
+| func_00000000 | export: draw the screen (TutList_Draw) | draft, 2 words (hoist order) |
+| func_00000454 | background bg.ehf | MATCH |
+| func_00000510 | title bar + caption | MATCH |
+| func_00000658 | text line helper | MATCH |
+| func_00000678 | list frame + category tabs | draft, regalloc only |
+| func_00000B8C | text line helper | MATCH |
+| func_00000B9C | one list row | MATCH |
+| func_00000D58 | text box helper | MATCH |
+| func_00000D74 | 9-slice frame | MATCH |
+| func_00000FD8 | blinking cursor frame | draft, regalloc only |
+| func_00001264 | scrollbar arrow (pulsing) | MATCH |
+| func_000014E8 | scrollbar | draft, regalloc + one CSE |
+| func_000017C0 | frame-info word 1 | MATCH |
+| func_000017E0 | draw a number | MATCH |
+| func_00001880 | build both category lists (TutList_BuildList) | draft, 243/247 words |
+| func_00001C5C | measure text | MATCH |
+| func_00001C68 | input handler (TutList_HandleInput) | draft, 402/404 words |
+| func_000022B8 | reset loader, qsort resource table | MATCH |
+| func_0000231C | poll archive load | MATCH |
+| func_000023C4 / 23CC | free archive | MATCH |
+| func_00002404 | start async load of database/tutoriallist.ehp | MATCH |
+| func_000024B4 | get resource by id (cached) | MATCH |
+| func_000025A0 | load-complete callback | MATCH |
+| func_00002630 | qsort comparator | MATCH |
+| func_00002640 | u16-key binary search | MATCH |
+| func_000026B8 | `return 0` stub | MATCH |
+| func_000026C0 | export: init (TutList_Init) | MATCH |
+| func_000027E4 | export: update / state machine (TutList_Update) | MATCH |
+| func_00002908 | shutdown | MATCH |
+| func_00002950 | export: result (-1 = cancelled) (TutList_GetResult) | MATCH |
+
+Data names are proposed in `config/symbols/rel_tutoriallist.extra.txt`.
+No Shift-JIS text in this module. The MWCC findings from this module
+(comparison spelling decides fused vs materialised compares and block order;
+when unreachable delay-slot copies survive) are written up in the header of
+`src/rel_tutoriallist.c`.

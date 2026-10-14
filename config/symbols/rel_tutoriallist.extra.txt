@@ -1,0 +1,32 @@
+// Hand-written symbol names for rel_tutoriallist — merged into the generated
+// rel_tutoriallist.txt by scripts/resolve_nids.py, which never overwrites this file.
+//
+// Convention: s_ = read-only string constant in .data, g_ = mutable global.
+// Descriptions go on their own comment line (splat parses `//` on a symbol
+// line as attributes).
+//
+// NOTE: src/rel_tutoriallist.c still uses the D_XXXXXXXX placeholders; rename
+// the externs there when this file is merged and the module is re-split.
+
+// "tab.gim" (resource 0x1002, category tabs)
+s_tab_gim = 0x00007B64; // type:asciz size:0x8
+// "parts.gim" (resource 0x1003, frames / arrows / scrollbar)
+s_parts_gim = 0x00007B6C; // type:asciz size:0xC
+// "bg.ehf" (resource 0x1011, background)
+s_bg_ehf = 0x00007B78; // type:asciz size:0x8
+// "strTbl_%c.bin" (resource 0x1020, per-language string table)
+s_strtbl_fmt = 0x00007B80; // type:asciz size:0x10
+// 4 x {u16 id; u16 pad; void *data; const char *name}, qsorted by id (func_000022B8)
+g_res_table = 0x00007B90; // size:0x30
+// "database/tutoriallist.ehp" (func_00002404)
+s_archive_path = 0x00007BC0; // type:asciz size:0x1C
+// "jegfis": language letters for strTbl_%c (initialiser of a local char[6] in func_000024B4)
+s_lang_letters = 0x00007BDC; // size:0x8
+// heap-creation parameter block passed to ehsys_C07BB470 by func_000026C0
+g_heap_param = 0x00007BE4; // size:0x1C
+// archive load state: bit0 busy/ready, bits1-7 completion count (func_0000231C)
+g_load_state = 0x00007C00; // size:0x2
+// loaded tutoriallist.ehp buffer (func_00002404 / func_000023CC)
+g_archive = 0x00007C04; // type:u32 size:0x4
+// the list state block (0x10C bytes, cleared by func_000026C0)
+g_tutlist = 0x00007C10; // size:0x10C
