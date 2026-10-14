@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" width="1200" height="520" role="img" aria-labelledby="t d" font-family="-apple-system,Segoe UI,Helvetica,Arial,sans-serif">
 <title id="t">Tag Force 5 decompilation progress</title>
-<desc id="d">86.87% of code bytes matched (298 of 312 functions). Each block is a module or function, area = code size, green = matched byte-for-byte.</desc>
+<desc id="d">87.91% of code bytes matched (300 of 312 functions). Each block is a module or function, area = code size, green = matched byte-for-byte.</desc>
 <style>
  .bg{fill:#fcfcfb} .done{fill:#0ca30c} .todo{fill:#d6d5d0} .gap{stroke:#fcfcfb} .ink{fill:#0b0b0b} .ink2{fill:#52514e} .mod{fill:none;stroke:#fcfcfb;stroke-width:3}
 @media (prefers-color-scheme: dark) { .bg{fill:#1a1a19} .done{fill:#0ca30c} .todo{fill:#3a3a37} .gap{stroke:#1a1a19} .ink{fill:#f0efec} .ink2{fill:#c3c2b7} .mod{fill:none;stroke:#1a1a19;stroke-width:3}}
 </style>
 <rect class="bg" width="1200" height="520"/>
-<text class="ink" x="16" y="38" font-size="26" font-weight="600">Started modules: 86.9% matched</text>
-<text class="ink2" x="16" y="66" font-size="15">73,588 of 84,712 code bytes · 298 of 312 functions · 6 of 29 modules complete</text>
+<text class="ink" x="16" y="38" font-size="26" font-weight="600">Started modules: 87.9% matched</text>
+<text class="ink2" x="16" y="66" font-size="15">74,472 of 84,712 code bytes · 300 of 312 functions · 6 of 29 modules complete</text>
 <rect class="done" x="854" y="26" width="16" height="16" rx="3"/><text class="ink2" x="878" y="39" font-size="14">matched</text><rect class="todo" x="964" y="26" width="16" height="16" rx="3"/><text class="ink2" x="988" y="39" font-size="14">not yet · area = bytes</text>
 <g><title>rel_debug_menu: 16,408/16,408 bytes, 44/44 functions</title>
 <rect class="todo" x="16.0" y="92.0" width="226.2" height="412.0"/>
@@ -60,17 +60,17 @@
 <text class="ink" x="22.0" y="110.0" font-size="14" font-weight="600">debug_menu</text>
 <text class="ink2" x="22.0" y="128.0" font-size="12">100%</text>
 </g>
-<g><title>rel_umd_replace: 12,424/14,860 bytes, 71/76 functions</title>
+<g><title>rel_umd_replace: 13,308/14,860 bytes, 73/76 functions</title>
 <rect class="todo" x="242.2" y="92.0" width="401.6" height="210.2"/>
 <rect class="done gap" stroke-width="0.6" x="242.2" y="92.0" width="74.8" height="130.6"><title>rel_umd_replace func_00001D98: 1720 bytes — matched</title></rect>
 <rect class="done gap" stroke-width="0.6" x="242.2" y="222.6" width="74.8" height="79.6"><title>rel_umd_replace func_00002A60: 1048 bytes — matched</title></rect>
 <rect class="todo gap" stroke-width="0.6" x="317.0" y="92.0" width="51.2" height="75.4"><title>rel_umd_replace func_000014A0: 680 bytes</title></rect>
 <rect class="done gap" stroke-width="0.6" x="317.0" y="167.4" width="51.2" height="68.3"><title>rel_umd_replace func_00003014: 616 bytes — matched</title></rect>
 <rect class="todo gap" stroke-width="0.6" x="317.0" y="235.7" width="51.2" height="66.5"><title>rel_umd_replace func_00000730: 600 bytes</title></rect>
-<rect class="todo gap" stroke-width="0.6" x="368.3" y="92.0" width="48.3" height="56.4"><title>rel_umd_replace func_00000DF0: 480 bytes</title></rect>
+<rect class="done gap" stroke-width="0.6" x="368.3" y="92.0" width="48.3" height="56.4"><title>rel_umd_replace func_00000DF0: 480 bytes — matched</title></rect>
 <rect class="done gap" stroke-width="0.6" x="368.3" y="148.4" width="48.3" height="54.6"><title>rel_umd_replace func_00000B20: 464 bytes — matched</title></rect>
 <rect class="done gap" stroke-width="0.6" x="368.3" y="203.0" width="48.3" height="51.7"><title>rel_umd_replace func_00001864: 440 bytes — matched</title></rect>
-<rect class="todo gap" stroke-width="0.6" x="368.3" y="254.7" width="48.3" height="47.5"><title>rel_umd_replace func_0000255C: 404 bytes</title></rect>
+<rect class="done gap" stroke-width="0.6" x="368.3" y="254.7" width="48.3" height="47.5"><title>rel_umd_replace func_0000255C: 404 bytes — matched</title></rect>
 <rect class="done gap" stroke-width="0.6" x="416.6" y="92.0" width="47.7" height="44.3"><title>rel_umd_replace func_000011BC: 372 bytes — matched</title></rect>
 <rect class="done gap" stroke-width="0.6" x="416.6" y="136.3" width="47.7" height="44.3"><title>rel_umd_replace func_000033DC: 372 bytes — matched</title></rect>
 <rect class="done gap" stroke-width="0.6" x="416.6" y="180.7" width="47.7" height="43.9"><title>rel_umd_replace func_00001330: 368 bytes — matched</title></rect>
@@ -141,7 +141,7 @@
 <rect class="mod" x="242.2" y="92.0" width="401.6" height="210.2"/>
 <rect class="bg" opacity="0.88" rx="3" x="244.2" y="94.0" width="105.5" height="38.0"/>
 <text class="ink" x="248.2" y="110.0" font-size="14" font-weight="600">umd_replace</text>
-<text class="ink2" x="248.2" y="128.0" font-size="12">84%</text>
+<text class="ink2" x="248.2" y="128.0" font-size="12">90%</text>
 </g>
 <g><title>rel_password: 14,264/14,264 bytes, 41/41 functions</title>
 <rect class="todo" x="242.2" y="302.2" width="401.6" height="201.8"/>

@@ -1,8 +1,8 @@
 {
  "total_bytes": 5676912,
- "matched_bytes": 73588,
+ "matched_bytes": 74472,
  "total_functions": 14083,
- "matched_functions": 298,
+ "matched_functions": 300,
  "complete_modules": 6,
  "modules": {
   "rel_cardalbum": {
@@ -432,8 +432,8 @@
   "rel_umd_replace": {
    "functions": 76,
    "bytes": 14860,
-   "matched_functions": 71,
-   "matched_bytes": 12424,
+   "matched_functions": 73,
+   "matched_bytes": 13308,
    "matched": [
     "func_00000000",
     "func_00000038",
@@ -454,6 +454,7 @@
     "func_00000988",
     "func_00000B20",
     "func_00000CF0",
+    "func_00000DF0",
     "func_00000FD0",
     "func_00001018",
     "func_000010A0",
@@ -474,6 +475,7 @@
     "func_00002484",
     "func_000024C4",
     "func_00002514",
+    "func_0000255C",
     "func_000026F0",
     "func_00002754",
     "func_000027A4",
