@@ -26,10 +26,33 @@ in the code rather than in data).
 
 ## Status
 
-Setup is complete and the **decompilation has started**. `rel_movie_viewer` (the
-smallest module, 26 KB) is fully split with a complete section-accurate splat config,
-and **15 of its 16 `.text` functions are matched at 100%** (see
-[`src/rel_movie_viewer.c`](src/rel_movie_viewer.c), functions tagged `MATCH 100%`).
+<!-- progress:start -->
+**1.30% of all code matched** — 298 of 14,083 functions, 6 of 29 modules rebuilt byte-for-byte from C.
+
+<p align="center"><img src="docs/progress/treemap.svg" alt="Progress treemap: every block is a module or function, area is code size, green is matched" width="100%"></p>
+
+<p align="center"><img src="docs/progress/treemap_started.svg" alt="Zoom on the modules that have been started, one block per function" width="100%"></p>
+
+Each block is a module (inside started modules, each function); its area is its code size and it turns green once our C compiles to the identical bytes. `rel_duel_eng`, the rules engine, is over half the game. Regenerate with `scripts/progress.py`.
+
+| module | functions | code bytes | progress |
+|---|---:|---:|---:|
+| `rel_html_view` | 16/16 | 1,888/1,888 | 100.0% ✅ |
+| `rel_movie_viewer` | 16/16 | 2,228/2,228 | 100.0% ✅ |
+| `rel_labo` | 14/14 | 4,840/4,840 | 100.0% ✅ |
+| `rel_soundtest` | 12/12 | 5,608/5,608 | 100.0% ✅ |
+| `rel_password` | 41/41 | 14,264/14,264 | 100.0% ✅ |
+| `rel_debug_menu` | 44/44 | 16,408/16,408 | 100.0% ✅ |
+| `rel_umd_replace` | 71/76 | 12,424/14,860 | 83.6% |
+| `rel_conv_machine` | 59/62 | 11,700/13,996 | 83.6% |
+| `rel_tutoriallist` | 25/31 | 4,228/10,620 | 39.8% |
+<!-- progress:end -->
+
+Six modules are rebuilt **entirely from C**, byte-for-byte (`make MODULE=<name> SRC=1`
+prints OK): `rel_movie_viewer`, `rel_html_view`, `rel_labo`, `rel_soundtest`,
+`rel_password` and `rel_debug_menu`. All 28 modules relink from their disassembly, and
+the EBOOT decrypts to its known sha1. Ghidra pseudocode for any module is one command
+away through [REA](docs/12-rea.md).
 
 Matching can now be verified **entirely locally** (no decomp.me account needed):
 `wibo` + a real `mwccpsp_3.0.1_219` binary compile candidate C, and

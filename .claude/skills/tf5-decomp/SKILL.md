@@ -100,6 +100,13 @@ splat's `func_XXXXXXXX`, imports named from config/symbols). Then
 don't compile it. Needs `source .rea_env.sh` (Node 24, GHIDRA_INSTALL_DIR =
 Ghidra 12.1.3 + ghidra-allegrex v21.4, JAVA_HOME = a full JDK 21).
 
+## Progress treemap (README)
+
+`scripts/progress.py` compiles each COMMITTED `src/<m>.c`, counts MATCH
+functions, and regenerates `docs/progress/treemap*.svg`, `progress.json` and
+the README block between `<!-- progress:start/end -->`. Re-run and commit it
+whenever a module's commit lands.
+
 ## How to attack a new module (checklist)
 
 1. `readelf -SW module.prx` → note the section layout (.text/.sceStub.text/.rodata.sceNid/.data/.bss).
