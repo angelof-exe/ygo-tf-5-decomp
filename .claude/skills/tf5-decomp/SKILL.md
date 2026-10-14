@@ -151,6 +151,7 @@ Ghidra 12.1.3 + ghidra-allegrex v21.4, JAVA_HOME = a full JDK 21).
 - `docs/06-splitting-and-matching.md` — splitting, m2c, asm-differ, decomp.me, mwccpsp
 - `docs/07-file-formats.md` — EHP/CIP/card DB/audio/models + community tools
 - `docs/08-resources.md` — links, community, reference project
+- `docs/13-mwcc-cookbook.md` — **read before fighting a diff**: what makes MWCC emit each shape
 - `docs/12-rea.md` — REA/Ghidra pseudocode for any module (PRX rewrap, batch dump)
 - `docs/09-first-match.md` — tutorial: first match on decomp.me (empty `func_000001C0`
   and `func_00000184` in rel_movie_viewer; m2c C draft included)
