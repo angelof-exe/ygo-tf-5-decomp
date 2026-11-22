@@ -45,6 +45,11 @@ Project: matching reconstruction of the code of **Yu-Gi-Oh! 5D's Tag Force 5**
 - **The 28 `USRDIR/gmodule/rel_*.prx` modules are PLAINTEXT Allegrex ELF**: analyzable
   immediately, no decryption needed. Convention: `rel_X.prx` = module `modX`, exports
   `libX_rel`, imports `libehsys_rel` from the main engine.
+- **The EBOOT is SPLIT and RELINKS** (`config/modehsys.yaml`, module
+  `modehsys`): `scripts/decrypt_eboot.sh` -> `scripts/prx_to_rea_elf.py
+  --splat-symbols EBOOT` -> `splat split config/modehsys.yaml` ->
+  `make MODULE=modehsys` prints OK. 2,726 functions, 1,564 already named
+  (`ehsys_*` exports). See docs/modules/modehsys.md.
 - **`SYSDIR/EBOOT.BIN` is ENCRYPTED** (magic `~PSP`, module `modehsys`). `BOOT.BIN` is a
   zeroed dummy (NOT the plaintext ELF). Decrypt it with pspdecrypt or PPSSPP.
 - **No Tag Force decomp has ever existed**: we're the first. Card logic is **hardcoded**
