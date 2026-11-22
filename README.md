@@ -27,7 +27,7 @@ in the code rather than in data).
 ## Status
 
 <!-- progress:start -->
-**1.34% of all code matched** — 301 of 16,809 functions, 6 of 29 modules rebuilt byte-for-byte from C.
+**1.64% of all code matched** — 398 of 16,809 functions, 6 of 29 modules rebuilt byte-for-byte from C.
 
 <p align="center"><img src="docs/progress/treemap.svg" alt="Progress treemap: every block is a module or function, area is code size, green is matched" width="100%"></p>
 
@@ -43,6 +43,7 @@ Each block is a module (inside started modules, each function); its area is its 
 | `rel_soundtest` | 12/12 | 5,608/5,608 | 100.0% ✅ |
 | `rel_password` | 41/41 | 14,264/14,264 | 100.0% ✅ |
 | `rel_debug_menu` | 44/44 | 16,408/16,408 | 100.0% ✅ |
+| `rel_gallery` | 97/98 | 17,120/17,740 | 96.5% |
 | `rel_conv_machine` | 60/62 | 13,252/13,996 | 94.7% |
 | `rel_umd_replace` | 73/76 | 13,308/14,860 | 89.6% |
 | `rel_tutoriallist` | 25/31 | 4,228/10,620 | 39.8% |
