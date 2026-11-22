@@ -37,6 +37,12 @@ comment in `src/` has the full story. Read this before fighting a diff.
   order**. Reorder the cases to reorder the tests. (rel_debug_menu)
 - `break` and `return 0` in a case give different branch pairs.
   (rel_html_view func_000005A0)
+- **A dead copy of a delay-slot instruction left after a `b`** (for example
+  `b epilogue; lw ra` then an unreachable `addu a0,zero,zero`) means the
+  function contains an early-return `switch` somewhere, not necessarily at
+  that branch. Turning a later `if (state == 0) return;` into
+  `switch (state) { case 0: return; }` made MWCC keep the original at the
+  head of the function. (rel_conv_machine func_000018D8)
 - A single-case `switch` is not the same as an `if`: it branches INTO the case
   (`beql`), with a separate `b` for the fall-through. (rel_movie_viewer)
 - The dead delay-slot copies seen thousands of times in big modules come from
@@ -53,6 +59,36 @@ comment in `src/` has the full story. Read this before fighting a diff.
 - **Reusing a variable** (`v = y - 0xA; lim = v; v = G;`) changes which
   register the second load gets. (rel_movie_viewer func_00000294)
 - `(x >> 3) & 1` compiles to Allegrex `ext`.
+- **A size mismatch can hide other diffs.** After fixing the missing word,
+  diff again: stack-slot and register differences may still be there.
+  Fixes that worked: oversize a local array so it lands at the target's
+  offset (`int st[0x68/4]` when only 0x60 bytes are cleared), reuse one
+  loop counter for two loops instead of declaring `j`, and write `int n;
+  n * f` rather than `(float) n * f` to flip the operands of `mul.s`.
+  (rel_conv_machine func_000018D8)
+- **Store of a call result hoisted to right after the call:** the
+  instruction scheduler does this (`#pragma schedule off` stops it), and
+  it can see past every pointer that is a constant `&global.member`. Only
+  an access through a pointer loaded from memory blocks it. (open:
+  rel_conv_machine func_00001590)
+- **A 4..12-byte hole below a local = a 16-byte-aligned type.** The VFPU
+  vector/matrix types and the 0x60 sprite block passed to `ehsys_7187E0F0`
+  are `__attribute__((aligned(16)))` (MWCC accepts it on a typedef): the
+  local is pushed down to the next 16-byte boundary. Fixed `Mtx` (frame
+  0x10 not 0x14), three `Vec4` camera vectors and `SprParam`, with no dummy
+  padding locals. (rel_cardalbum func_00002044, func_000023E8,
+  func_000008B8)
+- **A copy that goes through the stack twice** (globals -> tmp, tmp ->
+  local, then use) is a `float tmp[3]` array copied with
+  `v = *(Vec3 *) tmp;`. A struct temporary, or an inline function returning
+  one, is optimised away. (rel_cardalbum func_000023E8)
+- **`andi` only where a u16 value is assigned, never before arithmetic on
+  it**: an `int` local with `(unsigned short)` casts at each assignment. An
+  `unsigned short` local is re-masked before every use. (rel_cardalbum
+  func_00000AA0)
+- **Zero loop after the values were computed**: `float p[3] = {0};` zeroes
+  at its declaration, so open an inner block `{ float p[3] = {0}; p[0] = x;
+  ... }` after computing `x`. (rel_cardalbum func_00000EF4)
 
 ## Globals and addresses
 
