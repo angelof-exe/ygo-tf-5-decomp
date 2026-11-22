@@ -29,6 +29,13 @@ SRC     ?=
 
 ROOT    := $(CURDIR)
 PRX     := iso_extracted/PSP_GAME/USRDIR/gmodule/$(MODULE).prx
+SUMKEY  := $(MODULE).prx
+# The EBOOT (module modehsys) is the same kind of PRX once decrypted
+# (scripts/decrypt_eboot.sh), and checksums.sha1 lists it under that path.
+ifeq ($(MODULE),modehsys)
+  PRX    := build/EBOOT.elf
+  SUMKEY := build/EBOOT.elf
+endif
 LD      := build/$(MODULE).ld
 OUT     := build/$(MODULE).elf
 BIN     := build/$(MODULE).prx
@@ -137,7 +144,7 @@ $(BIN): $(OUT)
 	$(OBJCOPY) -O binary $< $@
 
 verify: $(BIN)
-	@expected=$$(grep -F "$(MODULE).prx" checksums.sha1 | cut -d' ' -f1); \
+	@expected=$$(grep -F "$(SUMKEY)" checksums.sha1 | cut -d' ' -f1); \
 	actual=$$(sha1sum $(BIN) | cut -d' ' -f1); \
 	total=$$(wc -c < $(PRX)); \
 	code=$$(printf '%d' 0x$$(readelf -SW $(PRX) | awk '{for (i = 1; i < NF; i++) if ($$i == ".text") print $$(i + 4)}')); \
