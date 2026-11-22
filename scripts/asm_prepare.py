@@ -31,6 +31,12 @@ import sys
 import tempfile
 
 MAX_ROUNDS = 40
+# Allegrex instructions gas DOES accept but encodes differently: on Allegrex
+# clz/clo/madd/maddu/msub/msubu live in the SPECIAL opcode, while MIPS32 puts
+# them in SPECIAL2. gas assembles them without complaint into the wrong bytes,
+# so the error-driven loop below never sees them. The EBOOT has 13 of these;
+# no gmodule PRX had any, which is why this went unnoticed until modehsys.
+ALWAYS_WORD = {"clz", "clo", "madd", "maddu", "msub", "msubu"}
 # "file.s:1234: Error: opcode not supported on this processor: ..."
 ERR = re.compile(r"^[^:]+:(\d+): Error: (opcode not supported|unrecognized opcode|invalid operands)")
 # /* rom vram WORD */  mnemonic operands
@@ -49,6 +55,14 @@ def main():
 
     lines = open(src, errors="replace").read().splitlines(keepends=True)
     rewritten = 0
+
+    for n, line in enumerate(lines):
+        m = LINE.match(line)
+        if m and m.group(6).split(None, 1)[:1] and m.group(6).split(None, 1)[0] in ALWAYS_WORD:
+            indent, rom, vram, word, _, insn = m.groups()
+            lines[n] = (f"{indent}/* {rom} {vram} {word} */  "
+                        f".word 0x{to_word(word):08X}  /* {insn.strip()} */\n")
+            rewritten += 1
 
     for _ in range(MAX_ROUNDS):
         with tempfile.NamedTemporaryFile("w", suffix=".s", delete=False,
