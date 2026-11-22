@@ -122,16 +122,17 @@ Globals referenced by the code: 47 distinct symbols, 19 of them past the end of 
 
 ## Decompilation status (src/rel_conv_machine.c)
 
-**60 / 62 functions match byte-for-byte** (MWCC 1.3 SP7, `-O4,s
+**61 / 62 functions match byte-for-byte** (MWCC 1.3 SP7, `-O4,s
 -sdatathreshold 0`), checked per function and again after linking the whole
-module with `make MODULE=rel_conv_machine SRC=1` (every one of the 60 is
-identical to the shipped PRX at link level). The two open ones are below;
-because they are a word too short/long, `SRC=1` does not yet print OK.
+module with `make MODULE=rel_conv_machine SRC=1`. The built PRX is now the
+right size (46980 bytes) and the only differing bytes are inside
+`func_00001590` (first one at file byte 5829 = 0x16C4), so `SRC=1` still
+prints FAIL because of that one function.
 
 | function | status | what is left |
 |---|---|---|
-| `func_000018D8` (draw, 388 words) | 387/388 | the target keeps a dead `addu $a0,$zero,$zero` at 0x1914 (the original of an instruction MWCC copied into a `bnel` delay slot). No if/else/return/switch/goto/do-while shape tried reproduces the leftover copy; rel_cardalbum's `func_00000000` has the identical artefact in the identical draw-chain opening, so it is a source idiom shared by the module family, not noise. Everything else in the function matches. |
-| `func_00001590` (message window init, 147 words) | 147/147, scheduling | same words, but the store of the text pointer (`rec->r38`) and the heap load are scheduled differently, which shifts the register choice of the bitfield inserts that follow. Same family as rel_movie_viewer's `func_00000294`. |
+| `func_000018D8` (draw, 388 words) | MATCH | the dead `addu $a0,$zero,$zero` at 0x1914 appears once `if (state == 0) return;` is written as `switch (state) { case 0: return; }`. Three more fixes were hidden behind the size mismatch: `st` is 0x68 bytes, the second loop reuses `i`, and `n = count - 1; n * f` gives the operand order of `mul.s`. See the comment in the source. (rel_cardalbum's `func_00000000` does NOT have the same artefact: its `addu $a0` is the live first instruction of the function.) |
+| `func_00001590` (message window init, 147 words) | 147/147, scheduling | same words, but the store of the text pointer (`rec->r38`) and the heap load are scheduled differently, which shifts the register choice of the bitfield inserts that follow. The instruction scheduler hoists the store (`#pragma schedule off` keeps it in place). Only a pointer it cannot resolve stops that, and the target's schedule looks like one where `w` and `r` may alias. The source comment lists everything ruled out. |
 
 ### Structure
 
@@ -188,11 +189,8 @@ link-level check is unaffected.
 
 ## Next steps
 
-1. `func_000018D8`: find the source shape that leaves the dead
-   `addu $a0,$zero,$zero` at 0x1914 (compare rel_cardalbum `func_00000000`
-   at 0xA8, the same artefact before the same `ehsys_DFCA450B` call).
-   decomp-permuter (random mode, ~3k iterations) did not find it.
-2. `func_00001590`: the `rec->r38` store; try the "cut the region into a
-   tiny function and permute it" technique from docs/10.
-3. Merge `config/symbols/rel_conv_machine.extra.txt` (scripts/resolve_nids.py)
+1. `func_00001590`: the `rec->r38` store. Find a spelling of `w`/`r` that
+   still compiles to one lui/addiu each but that the scheduler cannot
+   disambiguate (see the source comment for what was ruled out).
+2. Merge `config/symbols/rel_conv_machine.extra.txt` (scripts/resolve_nids.py)
    and rename the `D_` spellings in the C at the same time.

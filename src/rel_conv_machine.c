@@ -1230,7 +1230,21 @@ int func_000014A8(void) {
  * reached: `int flag` for the bitfields, `&w->rec` (costs a word: the target
  * materialises the record with its own lui/addiu), separate D_0007D05C/
  * D_0007D0A8 symbols, a statement-order permuter run (PERM_LINESWAP over the
- * 26 tail statements, ~5k iterations, best score 2100). */
+ * 26 tail statements, ~5k iterations, best score 2100).
+ * What moves the store (checked again): `#pragma schedule off` leaves it in
+ * source order, so the instruction scheduler hoists it, not the front end.
+ * The scheduler resolves every access here (base symbol + offset), so
+ * nothing blocks the store. Only an access through a pointer LOADED from
+ * memory (`*gp = 0`, or `w`/`r` read from a global) keeps it in place, and
+ * that costs words. With `w` unknown, the window's bitfield stores schedule
+ * exactly like the target (heap load first, `li v1,1` early,
+ * `andi t0,zero,1`), so the target's scheduler apparently treated w and r
+ * as possible aliases. Also no effect: volatile on w/r/r38/fD8/heap, char*
+ * or int casts of w/r, `(&r->r38)[flag]`, r reassigned or copied before the
+ * store, an inline SetText(r, text) or an inline helper for the whole tail,
+ * text assigned twice / used twice / typed void*, u16*, char*, unsigned,
+ * long, a removable `if (size != 0)` or `?:` block boundary at every
+ * position, and a 25-min randomising permuter run (best 1015, 71 diffs). */
 void func_00001590(unsigned char mode) {
     char buf[0x200];
     MsgWin *w = &D_0007D040.win;
@@ -1336,23 +1350,31 @@ void func_000018C8(int ptr) {
 }
 
 /* func_000018D8 — per-frame draw (display-list chain `p = f(p, ...)`).
- * NONMATCHING (387/388 words): identical except that the target keeps a dead
- * `addu $a0,$zero,$zero` at 0x1914. MWCC copied that instruction into the
- * `bnel` delay slot of the state-2 test and, unlike here, left the original
- * in place, i.e. the else block had a second predecessor when delay slots were
- * filled. if/else, early return, switch, goto, do/while(0), for(;;)/break and
- * an inline helper for the body all drop it. rel_cardalbum func_00000000 has
- * the same artefact before the same ehsys_DFCA450B call, so it is a shared
- * source idiom. The two pointers below are written as member addresses
+ * Four source details, each needed:
+ *  - `switch (state) { case 0: return; }` instead of `if (state == 0)
+ *    return;`. The target keeps a dead `addu $a0,$zero,$zero` at 0x1914:
+ *    the original of the instruction MWCC copied into the `bnel` delay slot
+ *    of the state-2 test. MWCC only leaves such originals behind when the
+ *    function contains this early-return switch (it doesn't matter that the
+ *    switch is further down); with the `if`, the copy is deleted and the
+ *    function is one word short.
+ *  - `st` is 0x68 bytes (only 0x60 are cleared). That puts it at sp+0x20,
+ *    8 bytes below st2, as in the target.
+ *  - the second loop reuses `i`. A separate `j` swaps $s1/$s2.
+ *  - `n = count - 1; ... n * f` (int times float) gives
+ *    `mul.s $f0,$f0,$f20`; `(float) (count - 1) * f` and `f * ...` both
+ *    give `mul.s $f0,$f20,$f0`.
+ * The two pointers below are written as member addresses
  * (`&D_0007D040.model`, `&D_0007D040.win.rec`) so they are not
- * constant-propagated (lever 1); with them the rest of the function matches. */
+ * constant-propagated (lever 1).
+ * MATCH 100% (mwccpsp_3.0.1_219, -O4,s -sdatathreshold 0). */
 void func_000018D8(void) {
     int p;
     int st2[0x34 / 4];
-    int st[0x60 / 4];
+    int st[0x68 / 4];
     float f;
     int i;
-    int j;
+    int n;
 
     if (D_0007D040.state == 2) {
         select_card_CFA64443();
@@ -1363,7 +1385,8 @@ void func_000018D8(void) {
         p = ehsys_399AC68A(p, 0);
         p = ehsys_C62F9EAC(p, 0x17);
         ehsys_1EC5342B(p);
-        if (D_0007D040.state == 0) {
+        switch (D_0007D040.state) {
+        case 0:
             return;
         }
         if (D_0007D040.state == 4 && D_0007D040.sub == 2) {
@@ -1387,16 +1410,17 @@ void func_000018D8(void) {
         p = ehsys_8EA6B1E7(p, 0x20, 0x100, 0x20, 0x100);
         p = ehsys_FDD168CA(p, i << 6, 0, 0, i << 6, 0, 0, 0);
         p = ehsys_8EA6B1E7(p, 0x10, 0x40, 0x40, 0x10);
-        for (j = 0; j < 4; j++) {
-            p = ehsys_FDD168CA(p, 0x100 - ((j + 1) << 6), 0x100, 0, 0x1E0, j << 6, 0, 3);
-            p = ehsys_FDD168CA(p, 0x200 - ((j + 1) << 6), 0x100, 0, 0x1F0, j << 6, 0, 3);
+        for (i = 0; i < 4; i++) {
+            p = ehsys_FDD168CA(p, 0x100 - ((i + 1) << 6), 0x100, 0, 0x1E0, i << 6, 0, 3);
+            p = ehsys_FDD168CA(p, 0x200 - ((i + 1) << 6), 0x100, 0, 0x1F0, i << 6, 0, 3);
         }
         ehsys_memset(st, 0, 0x60);
         f = (float) D_0007D040.x00C / 500.0f;
         if (f > 1.0f) {
             f = 1.0f;
         }
-        ehsys_CE8B1945(D_0007D040.x3C0, (float) (ehsys_28633E5D(D_0007D040.x3C0) - 1) * f);
+        n = ehsys_28633E5D(D_0007D040.x3C0) - 1;
+        ehsys_CE8B1945(D_0007D040.x3C0, n * f);
         st[3] = 0x10000;
         st[0] = 0;
         st[5] = 0;
