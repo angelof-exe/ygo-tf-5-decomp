@@ -30,6 +30,25 @@ comment in `src/` has the full story. Read this before fighting a diff.
   separate `if`s.
 - **Early `return 0` vs falling through** to the shared return decides
   whether a later branch gets a branch-likely fill. (rel_labo)
+- **`if (f()) return 1; return 0;` folds to `sltu v0,zero,v0`.** The target's
+  `beq; b ret; li 1; li 0` shape needs the function's other path to fall
+  through to that shared `return 0` (`if (x) { ... } else if (f()) return 1;
+  return 0;`). (rel_cardalbum func_00005330, func_0000541C)
+- **Fallthrough = then-block.** When the branch-likely target holds the
+  "normal" path and the fall-through holds the exit (`bgtzl col,next; ...;
+  view = 1; return`), write the inverted test with the exit first:
+  `if (col <= 0) { ...; return; } col--;`. (rel_cardalbum func_000031C4,
+  func_000038C8, func_00004A54)
+- **`>= K` gives `slti vN` + `bnez vN`, `> K-1` gives `slti $at` + branch**
+  (and the other way round for `<=`). Pick the spelling by the register the
+  target compares into. (rel_cardalbum func_00003EE4, func_00004D64)
+- **Range test `addiu -K; sltiu 2`** is `if ((unsigned) (id - K) < 2)`; the
+  GNU `case K ... K+1:` gives two signed compares. (rel_cardalbum
+  func_0000608C)
+- **A constant-count loop that still starts with `b test`** has an unsigned
+  bound: `for (i = 0; i < 5U; i++)` or `k < sizeof(a) / sizeof(a[0])` with
+  `int` i. A plain `i < 5` lets MWCC skip the first test. (rel_cardalbum
+  func_00004488, func_00005F04)
 
 ## switch
 
@@ -154,3 +173,34 @@ rel_soundtest func_00000908. `source .venv/bin/activate` has the permuter's
 - An `@NNN` jump table in our object vs `jtbl_XXXXXXXX` in the target, and a
   `D_X + 4` field vs splat's `D_X+4` name, are the same thing:
   `scripts/mwcc_diff.py` resolves both. `make SRC=1` is the final word.
+
+## C++ modules (rel_gallery)
+
+- **Spot one:** vtables `{0, 0, dtor, ...}` in .data, deleting dtors with a
+  `short` flag (`seh`; `blez` -> operator delete), virtual calls through
+  `$t9`. Compile the file as C++ with `#pragma cplusplus on` +
+  `#pragma exceptions off` at the top and wrap everything in `extern "C" {}`
+  (names stay `func_XXXXXXXX`; works with the unchanged `.c` build).
+- **`$t9` only comes from a real virtual call.** A C function-pointer call
+  always uses `$v0`. Declare "view" classes whose virtuals are declared but
+  never defined (`class XV { char d[VPTR_OFF]; public: virtual ~XV(); ...};`)
+  and call `((XV *) p)->f()` / `delete (XV *) p;`. Nothing is defined, so
+  no vtable or .data is emitted; keep the objects as plain structs with an
+  explicit `vptr` member that ctors/dtors store by hand.
+- **Avoid real class destructors**: MWCC emits an out-of-line weak copy of
+  every inline dtor into an extra `.text` section (which would be linked).
+  MWCC's `__construct_array` guard object (memory-resident because it has a
+  dtor) is reproduced in C by taking the address of its counter
+  (`size_t *pi = &pad.i;`) -- that alone keeps the struct in memory.
+- **Runtime functions use other flags**: wrap them in
+  `#pragma optimize_for_size off` ... `reset`.
+- **Struct copy of a byte table** (`lb/lb/sb/sb` loop, 2 bytes per turn):
+  `T x = *(T *) D_char_array;` -- copying from an extern declared as the
+  struct type gives a word loop instead.
+- **Parameter copy placed after an early-exit branch**: when the target
+  does `blez a1, out; sw s0 (delay)` and only then `move s0,a0`, take the
+  parameter as `void *arg` and declare `T *p = (T *) arg;` INSIDE the
+  if-block. A function-scope copy is emitted at entry.
+- **Float constants loaded from .data**: `extern const float D_X;` -- the
+  `const` lets MWCC hoist the load like a literal-pool load (plain
+  `extern float` stays pinned below earlier stores).
