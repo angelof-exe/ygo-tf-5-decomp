@@ -25,6 +25,7 @@ Requires: `source .rea_env.sh` (Node >= 22.19, GHIDRA_INSTALL_DIR, JDK 21).
 """
 import argparse
 import json
+import re
 import os
 import subprocess
 import sys
@@ -129,13 +130,16 @@ def main():
                 for k in procs.get("procedures", {}) if isinstance(procs.get("procedures"), dict) else []:
                     addrs.append(k)
             # stubs live in .sceStub.text; only real code is worth a dump
-            stub_base = min((int(l.split("=")[1].split(";")[0], 16)
-                             for l in (ROOT / f"config/symbols/{args.module}.txt").read_text().splitlines()
-                             if l.startswith("ehsys_") or l.startswith("sce")), default=1 << 32)
+            # (read from the analysis ELF itself: in the EBOOT the ehsys_
+            # exports are real .text functions, so names can't tell)
+            out = subprocess.run(["mips-linux-gnu-readelf", "-SW", str(elf)],
+                                 capture_output=True, text=True).stdout
+            m = re.search(r"\.sceStub\.text\s+\S+\s+([0-9a-f]+)", out)
+            stub_base = int(m.group(1), 16) if m else 1 << 32
             # Ghidra merges a function into its neighbour when the first one
             # ends in a tail call; splat's boundaries are the ones src/ uses,
             # so add every `glabel func_` from asm/ as well.
-            text_s = ROOT / f"asm/{args.module}/text.s"
+            text_s = ROOT / f"asm/{'modehsys' if args.module == 'EBOOT' else args.module}/text.s"
             if text_s.exists():
                 for line in text_s.read_text().splitlines():
                     if line.startswith("glabel func_"):
