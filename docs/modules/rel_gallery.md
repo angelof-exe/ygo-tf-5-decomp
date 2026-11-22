@@ -120,6 +120,26 @@ Globals referenced by the code: 48 distinct symbols, 5 of them past the end of `
 0x009F44  ASW_a_USA
 ```
 
+## Decompilation status (src/rel_gallery.c)
+
+- **97 / 98 functions byte-identical.** `func_00000814` (ItemList::load)
+  differs only in where one `lui` is scheduled relative to the prologue's
+  `sw $s0`. `make MODULE=rel_gallery SRC=1` builds 51332 bytes (correct
+  size) and differs in 6 bytes at file offset 0x87C..0x883 only.
+- The module is **C++**; the file is compiled with `#pragma cplusplus on`
+  inside `extern "C"` (see the file header and docs/13 "C++ modules").
+- Classes: Scene (0x224, state machine), ItemList (157 tiles, pages of
+  93 + 64), Item (tile), Player (async file loader), Task (update/draw
+  list node), LoadReq. Runtime: `__destroy_arr`, `__construct_array`.
+- Engine calls whose role is now clear: ehsys_57345021 = operator new
+  (size, heap); ehsys_9455886E = operator delete; ehsys_50EA4D71 /
+  ehsys_B48A11FB / ehsys_245526EE = movie work buffer / play (blocking,
+  flags 0xF3F9) / end, as in rel_movie_viewer; ehsys_8288EEBC = async file
+  load with completion callback; ehsys_D2A768F4 = file size;
+  ehsys_A38AA0E9 = sinf; ehsys_7754CFD2(id) = bust-up file name;
+  ehsys_8477BA04 / ehsys_635BB4EE = save-data "seen" flags.
+- No Shift-JIS text.
+
 ## Next steps
 
 1. `splat split config/rel_gallery.yaml` (already run; `asm/rel_gallery/` is gitignored)

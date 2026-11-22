@@ -1,0 +1,56 @@
+// Hand-written symbol names for rel_gallery - merged into the generated
+// rel_gallery.txt by scripts/resolve_nids.py, which never overwrites this file.
+//
+// Convention: s_ = read-only string/table in .data, g_ = mutable global.
+// Evidence for each name is in the comments of src/rel_gallery.c.
+// NOTE: src/rel_gallery.c still spells these as D_XXXXXXXX (the Makefile
+// and mwcc_diff.py derive addresses from those names).
+
+// tiles per page {93, 64} (three copies, used by different functions)
+s_page_tile_count = 0x00009854; // size:0x2
+s_page_movie_count = 0x00009898; // size:0x2
+s_page_first_movie = 0x0000989C; // size:0x2
+s_movie_string_ids = 0x000098A0;
+s_page_title_ids = 0x000099E8; // size:0x8
+s_scrollbar_rows = 0x00009A00; // size:0x2
+s_two_pi = 0x00009A04; // float
+s_cursor_snap_dist2 = 0x00009A08; // float
+s_cursor_easing = 0x00009A0C; // float
+s_exit_easing = 0x00009A10; // float
+// {device, name} per loader slot: basic.ehp, ev5_03, ev5_04, ...
+s_loader_files = 0x00009A14;
+// thum01j/thum02j/thum01e/thum02e.gim, bg.ehf/tmf, gallpda.ehf/tmf
+s_thumbnail_files = 0x00009D6C; // size:0x20
+// {japanese/default, USA} movie names: TF5_opening, TF5_staffroll, SSD_s, ...
+s_movie_names = 0x0000A030;
+s_unlock_ids = 0x0000A230; // size:0x8C
+s_movie_path_fmt = 0x0000A308; // "movie/%s.pmf"
+s_strtbl_name = 0x0000A318; // "strTbl.bin"
+s_lang_ehp_names = 0x0000A39C; // basic_lang_<lang>.ehp
+s_event_dirs = 0x0000A414; // field/event/<j|e|g|f|i|s>/
+s_bustup_table = 0x0000A538; // {motion, x offset} per character
+s_vtbl_ItemList = 0x0000A7C8; // size:0x18
+s_vtbl_Item = 0x0000A7E0; // size:0x18
+s_vtbl_Scene = 0x0000A7F8; // size:0xC
+s_vtbl_Player = 0x0000A804; // size:0xC
+s_vtbl_Task = 0x0000A810; // size:0x1C
+g_module_reg = 0x0000A840; // size:0xC
+g_running = 0x0000A84C;
+g_heap_arena = 0x0000A850; // size:0x300000
+g_heap = 0x0030A850;
+g_scene = 0x0030A854;
+g_scene_instance = 0x0030A858;
+g_movie_work = 0x0030A880; // size:0x400000
+g_image_work = 0x0070A880;
+g_scrollbar_phase = 0x00755880;
+g_root_task = 0x00755884;
+
+// Functions (proposed, see src/rel_gallery.c):
+//   func_00000000 __destroy_arr, func_0000006C __construct_array (MWCC runtime)
+//   func_00000150 module_start, func_00000188 gallery_main, func_00000230 gallery_init
+//   func_000002B8/000003B8 Scene ctor/dtor, func_000013D0 Scene_init,
+//   func_00002124 Scene_update, func_00003BCC Scene_draw, func_000024E8 Scene_playMovie
+//   func_00000728/00001368 ItemList ctor/dtor, func_00000814 ItemList_load
+//   func_000007FC/000007B4 Item ctor/dtor, func_00000408 Item_update, func_00000638 Item_draw
+//   func_000015B8/000017D0 Player (file loader) ctor/dtor, func_00003D94 Player_load
+//   func_000044AC/00004504 Task ctor/dtor, func_00004264 Task_updateAll, func_000042C0 Task_drawAll
