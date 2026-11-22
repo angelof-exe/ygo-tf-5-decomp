@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" width="1200" height="760" role="img" aria-labelledby="t d" font-family="-apple-system,Segoe UI,Helvetica,Arial,sans-serif">
 <title id="t">Tag Force 5 decompilation progress</title>
-<desc id="d">1.64% of code bytes matched (398 of 16809 functions). Each block is a module or function, area = code size, green = matched byte-for-byte.</desc>
+<desc id="d">2.12% of code bytes matched (479 of 16809 functions). Each block is a module or function, area = code size, green = matched byte-for-byte.</desc>
 <style>
  .bg{fill:#fcfcfb} .done{fill:#0ca30c} .todo{fill:#d6d5d0} .gap{stroke:#fcfcfb} .ink{fill:#0b0b0b} .ink2{fill:#52514e} .mod{fill:none;stroke:#fcfcfb;stroke-width:3}
 @media (prefers-color-scheme: dark) { .bg{fill:#1a1a19} .done{fill:#0ca30c} .todo{fill:#3a3a37} .gap{stroke:#1a1a19} .ink{fill:#f0efec} .ink2{fill:#c3c2b7} .mod{fill:none;stroke:#1a1a19;stroke-width:3}}
 </style>
 <rect class="bg" width="1200" height="760"/>
-<text class="ink" x="16" y="38" font-size="26" font-weight="600">1.64% matched</text>
-<text class="ink2" x="16" y="66" font-size="15">93,144 of 5,676,900 code bytes · 398 of 16,809 functions · 6 of 29 modules complete</text>
+<text class="ink" x="16" y="38" font-size="26" font-weight="600">2.12% matched</text>
+<text class="ink2" x="16" y="66" font-size="15">120,248 of 5,676,900 code bytes · 479 of 16,809 functions · 6 of 29 modules complete</text>
 <rect class="done" x="854" y="26" width="16" height="16" rx="3"/><text class="ink2" x="878" y="39" font-size="14">matched</text><rect class="todo" x="964" y="26" width="16" height="16" rx="3"/><text class="ink2" x="988" y="39" font-size="14">not yet · area = bytes</text>
 <g><title>rel_duel_eng: 0/3,107,612 bytes, 0/7487 functions</title>
 <rect class="todo" x="16.0" y="92.0" width="639.4" height="652.0"/>
@@ -114,8 +114,90 @@
 <text class="ink" x="1015.0" y="579.2" font-size="11" font-weight="600">recipevi…</text>
 <text class="ink2" x="1015.0" y="594.2" font-size="9">0%</text>
 </g>
-<g><title>rel_cardalbum: 0/28,340 bytes, 0/82 functions</title>
+<g><title>rel_cardalbum: 27,104/28,340 bytes, 81/82 functions</title>
 <rect class="todo" x="1077.7" y="564.2" width="54.7" height="69.5"/>
+<rect class="done gap" stroke-width="0.6" x="1077.7" y="564.2" width="14.2" height="12.2"><title>rel_cardalbum func_00003EE4: 1284 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1091.8" y="564.2" width="13.6" height="12.2"><title>rel_cardalbum func_00001774: 1236 bytes — matched</title></rect>
+<rect class="todo gap" stroke-width="0.6" x="1105.4" y="564.2" width="13.6" height="12.2"><title>rel_cardalbum func_00004D64: 1236 bytes</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1119.1" y="564.2" width="13.3" height="12.2"><title>rel_cardalbum func_00000EF4: 1208 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1077.7" y="576.4" width="11.6" height="10.8"><title>rel_cardalbum func_00000B4C: 936 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1089.3" y="576.4" width="11.2" height="10.8"><title>rel_cardalbum func_00002044: 900 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1100.5" y="576.4" width="11.0" height="10.8"><title>rel_cardalbum func_00005744: 884 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1111.4" y="576.4" width="10.7" height="10.8"><title>rel_cardalbum func_000013AC: 860 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1122.1" y="576.4" width="10.3" height="10.8"><title>rel_cardalbum func_00001C74: 828 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1077.7" y="587.2" width="9.7" height="10.5"><title>rel_cardalbum func_000023E8: 760 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1077.7" y="597.7" width="9.7" height="9.4"><title>rel_cardalbum func_000005DC: 684 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1077.7" y="607.1" width="9.7" height="9.1"><title>rel_cardalbum func_00000000: 660 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1077.7" y="616.2" width="9.7" height="8.9"><title>rel_cardalbum func_00002754: 644 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1077.7" y="625.1" width="9.7" height="8.6"><title>rel_cardalbum func_000031C4: 624 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1087.4" y="587.2" width="9.5" height="8.3"><title>rel_cardalbum func_00003678: 592 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1096.9" y="587.2" width="9.3" height="8.3"><title>rel_cardalbum func_00003434: 580 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1106.3" y="587.2" width="8.9" height="8.3"><title>rel_cardalbum func_00004690: 556 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1115.2" y="587.2" width="8.8" height="8.3"><title>rel_cardalbum func_000065DC: 548 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1124.0" y="587.2" width="8.4" height="8.3"><title>rel_cardalbum func_00004488: 520 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1087.4" y="595.5" width="8.4" height="7.8"><title>rel_cardalbum func_000038C8: 492 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1087.4" y="603.3" width="8.4" height="7.8"><title>rel_cardalbum func_00005D10: 492 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1087.4" y="611.2" width="8.4" height="7.8"><title>rel_cardalbum func_000008B8: 488 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1087.4" y="618.9" width="8.4" height="7.5"><title>rel_cardalbum func_00005AB8: 472 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1087.4" y="626.4" width="8.4" height="7.3"><title>rel_cardalbum func_00000414: 456 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1095.8" y="595.5" width="7.7" height="7.8"><title>rel_cardalbum func_00006BB4: 452 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1103.6" y="595.5" width="7.5" height="7.8"><title>rel_cardalbum func_00004A54: 440 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1111.1" y="595.5" width="7.5" height="7.8"><title>rel_cardalbum func_00003010: 436 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1118.6" y="595.5" width="7.0" height="7.8"><title>rel_cardalbum func_000048BC: 408 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1125.5" y="595.5" width="6.8" height="7.8"><title>rel_cardalbum func_000029D8: 400 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1095.8" y="603.4" width="6.8" height="7.8"><title>rel_cardalbum func_00002E44: 396 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1095.8" y="611.1" width="6.8" height="7.8"><title>rel_cardalbum func_000055B8: 396 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1095.8" y="618.9" width="6.8" height="7.5"><title>rel_cardalbum func_00000294: 384 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1095.8" y="626.5" width="6.8" height="7.2"><title>rel_cardalbum func_00002BE4: 368 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1102.7" y="603.4" width="7.7" height="6.3"><title>rel_cardalbum func_0000608C: 360 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1110.3" y="603.4" width="7.5" height="6.3"><title>rel_cardalbum func_000061F4: 352 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1117.8" y="603.4" width="7.3" height="6.3"><title>rel_cardalbum func_00004C0C: 344 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1125.1" y="603.4" width="7.2" height="6.3"><title>rel_cardalbum func_00003D90: 340 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1102.7" y="609.7" width="6.7" height="6.3"><title>rel_cardalbum func_00006D78: 316 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1102.7" y="616.0" width="6.7" height="6.1"><title>rel_cardalbum func_00003C5C: 308 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1102.7" y="622.1" width="6.7" height="5.9"><title>rel_cardalbum func_00006A8C: 296 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1102.7" y="628.0" width="6.7" height="5.7"><title>rel_cardalbum func_000064C0: 284 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1109.4" y="609.7" width="6.4" height="4.9"><title>rel_cardalbum func_00005330: 236 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1115.8" y="609.7" width="5.9" height="4.9"><title>rel_cardalbum func_00005F04: 216 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1121.7" y="609.7" width="5.7" height="4.9"><title>rel_cardalbum func_00002D54: 208 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1127.4" y="609.7" width="5.0" height="4.9"><title>rel_cardalbum func_00006848: 184 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1109.4" y="614.6" width="4.9" height="5.1"><title>rel_cardalbum func_00006900: 184 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1109.4" y="619.6" width="4.9" height="4.8"><title>rel_cardalbum func_00005FDC: 176 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1109.4" y="624.5" width="4.9" height="4.7"><title>rel_cardalbum func_00000AA0: 172 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1109.4" y="629.2" width="4.9" height="4.5"><title>rel_cardalbum func_000054B8: 164 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1114.3" y="614.6" width="4.8" height="4.4"><title>rel_cardalbum func_0000541C: 156 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1119.0" y="614.6" width="4.5" height="4.4"><title>rel_cardalbum func_00003B6C: 148 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1123.6" y="614.6" width="4.4" height="4.4"><title>rel_cardalbum func_00006354: 144 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1128.0" y="614.6" width="4.4" height="4.4"><title>rel_cardalbum func_000069B8: 144 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1114.3" y="619.0" width="4.8" height="3.9"><title>rel_cardalbum func_00005238: 140 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1114.3" y="622.9" width="4.8" height="3.7"><title>rel_cardalbum func_00003AE8: 132 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1114.3" y="626.6" width="4.8" height="3.6"><title>rel_cardalbum func_00005C90: 128 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1114.3" y="630.2" width="4.8" height="3.5"><title>rel_cardalbum func_00002B68: 124 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1119.0" y="619.0" width="4.5" height="3.5"><title>rel_cardalbum func_000063F4: 120 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1123.6" y="619.0" width="4.4" height="3.5"><title>rel_cardalbum func_00001FD0: 116 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1128.0" y="619.0" width="4.4" height="3.5"><title>rel_cardalbum func_000026E0: 116 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1119.0" y="622.5" width="3.7" height="3.9"><title>rel_cardalbum func_00001708: 108 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1119.0" y="626.4" width="3.7" height="3.9"><title>rel_cardalbum func_000052C4: 108 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1119.0" y="630.4" width="3.7" height="3.3"><title>rel_cardalbum func_00003C00: 92 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1122.7" y="622.5" width="3.5" height="3.6"><title>rel_cardalbum func_0000442C: 92 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1126.2" y="622.5" width="3.5" height="3.6"><title>rel_cardalbum func_0000555C: 92 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1129.7" y="622.5" width="2.7" height="3.6"><title>rel_cardalbum func_00006800: 72 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1122.7" y="626.1" width="3.4" height="2.6"><title>rel_cardalbum func_000043E8: 68 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1122.7" y="628.7" width="3.4" height="2.5"><title>rel_cardalbum func_00002FD0: 64 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1122.7" y="631.2" width="3.4" height="2.5"><title>rel_cardalbum func_00006480: 64 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1126.2" y="626.1" width="3.3" height="2.4"><title>rel_cardalbum func_00006A48: 60 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1129.5" y="626.1" width="2.9" height="2.4"><title>rel_cardalbum func_00003AB4: 52 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1126.2" y="628.5" width="2.0" height="3.0"><title>rel_cardalbum func_00001C48: 44 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1126.2" y="631.5" width="2.0" height="2.2"><title>rel_cardalbum func_00000888: 32 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1128.1" y="628.5" width="2.1" height="2.0"><title>rel_cardalbum func_00001FB0: 32 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1130.3" y="628.5" width="2.1" height="2.0"><title>rel_cardalbum func_000023C8: 32 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1128.1" y="630.5" width="1.5" height="1.8"><title>rel_cardalbum func_0000646C: 20 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1128.1" y="632.3" width="1.5" height="1.4"><title>rel_cardalbum func_000008A8: 16 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1129.7" y="630.5" width="1.4" height="1.6"><title>rel_cardalbum func_00002E24: 16 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1131.0" y="630.5" width="1.4" height="1.6"><title>rel_cardalbum func_00002E34: 16 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1129.7" y="632.1" width="1.4" height="1.6"><title>rel_cardalbum func_000063E4: 16 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1131.0" y="632.1" width="1.4" height="0.8"><title>rel_cardalbum func_00005EFC: 8 bytes — matched</title></rect>
+<rect class="done gap" stroke-width="0.6" x="1131.0" y="632.9" width="1.4" height="0.8"><title>rel_cardalbum func_00006A84: 8 bytes — matched</title></rect>
 <rect class="mod" x="1077.7" y="564.2" width="54.7" height="69.5"/>
 </g>
 <g><title>rel_tutorial: 0/26,740 bytes, 0/190 functions</title>
