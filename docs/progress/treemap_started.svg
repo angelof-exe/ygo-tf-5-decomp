@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" width="1200" height="520" role="img" aria-labelledby="t d" font-family="-apple-system,Segoe UI,Helvetica,Arial,sans-serif">
 <title id="t">Tag Force 5 decompilation progress</title>
-<desc id="d">87.91% of code bytes matched (300 of 312 functions). Each block is a module or function, area = code size, green = matched byte-for-byte.</desc>
+<desc id="d">89.74% of code bytes matched (301 of 312 functions). Each block is a module or function, area = code size, green = matched byte-for-byte.</desc>
 <style>
  .bg{fill:#fcfcfb} .done{fill:#0ca30c} .todo{fill:#d6d5d0} .gap{stroke:#fcfcfb} .ink{fill:#0b0b0b} .ink2{fill:#52514e} .mod{fill:none;stroke:#fcfcfb;stroke-width:3}
 @media (prefers-color-scheme: dark) { .bg{fill:#1a1a19} .done{fill:#0ca30c} .todo{fill:#3a3a37} .gap{stroke:#1a1a19} .ink{fill:#f0efec} .ink2{fill:#c3c2b7} .mod{fill:none;stroke:#1a1a19;stroke-width:3}}
 </style>
 <rect class="bg" width="1200" height="520"/>
-<text class="ink" x="16" y="38" font-size="26" font-weight="600">Started modules: 87.9% matched</text>
-<text class="ink2" x="16" y="66" font-size="15">74,472 of 84,712 code bytes · 300 of 312 functions · 6 of 29 modules complete</text>
+<text class="ink" x="16" y="38" font-size="26" font-weight="600">Started modules: 89.7% matched</text>
+<text class="ink2" x="16" y="66" font-size="15">76,024 of 84,712 code bytes · 301 of 312 functions · 6 of 29 modules complete</text>
 <rect class="done" x="854" y="26" width="16" height="16" rx="3"/><text class="ink2" x="878" y="39" font-size="14">matched</text><rect class="todo" x="964" y="26" width="16" height="16" rx="3"/><text class="ink2" x="988" y="39" font-size="14">not yet · area = bytes</text>
 <g><title>rel_debug_menu: 16,408/16,408 bytes, 44/44 functions</title>
 <rect class="todo" x="16.0" y="92.0" width="226.2" height="412.0"/>
@@ -191,9 +191,9 @@
 <text class="ink" x="248.2" y="320.2" font-size="14" font-weight="600">password</text>
 <text class="ink2" x="248.2" y="338.2" font-size="12">100%</text>
 </g>
-<g><title>rel_conv_machine: 11,700/13,996 bytes, 59/62 functions</title>
+<g><title>rel_conv_machine: 13,252/13,996 bytes, 60/62 functions</title>
 <rect class="todo" x="643.8" y="92.0" width="339.4" height="234.3"/>
-<rect class="todo gap" stroke-width="0.6" x="643.8" y="92.0" width="79.5" height="110.8"><title>rel_conv_machine func_000018D8: 1552 bytes</title></rect>
+<rect class="done gap" stroke-width="0.6" x="643.8" y="92.0" width="79.5" height="110.8"><title>rel_conv_machine func_000018D8: 1552 bytes — matched</title></rect>
 <rect class="done gap" stroke-width="0.6" x="643.8" y="202.8" width="79.5" height="64.8"><title>rel_conv_machine func_0000111C: 908 bytes — matched</title></rect>
 <rect class="done gap" stroke-width="0.6" x="643.8" y="267.7" width="79.5" height="58.6"><title>rel_conv_machine func_000027E0: 820 bytes — matched</title></rect>
 <rect class="done gap" stroke-width="0.6" x="723.3" y="92.0" width="60.2" height="65.3"><title>rel_conv_machine func_00002B14: 692 bytes — matched</title></rect>
@@ -258,7 +258,7 @@
 <rect class="mod" x="643.8" y="92.0" width="339.4" height="234.3"/>
 <rect class="bg" opacity="0.88" rx="3" x="645.8" y="94.0" width="114.2" height="38.0"/>
 <text class="ink" x="649.8" y="110.0" font-size="14" font-weight="600">conv_machine</text>
-<text class="ink2" x="649.8" y="128.0" font-size="12">84%</text>
+<text class="ink2" x="649.8" y="128.0" font-size="12">95%</text>
 </g>
 <g><title>rel_tutoriallist: 4,228/10,620 bytes, 25/31 functions</title>
 <rect class="todo" x="643.8" y="326.3" width="339.4" height="177.7"/>

@@ -81,12 +81,12 @@ def parse_target(path):
     funcs = {}
     cur = None
     for line in open(path):
-        m = re.match(r"glabel (func_[0-9A-F]+)", line)
+        m = re.match(r"glabel ([A-Za-z_]\w*)", line)
         if m:
             cur = m.group(1)
             funcs[cur] = []
             continue
-        if re.match(r"endlabel (func_[0-9A-F]+)", line):
+        if re.match(r"endlabel ([A-Za-z_]\w*)", line):
             cur = None
             continue
         m = re.match(r"\s*/\* [0-9A-F]+ [0-9A-F]+ ([0-9A-F]{8}) \*/\s*(\S+)\s*(.*)", line)
@@ -116,7 +116,7 @@ def parse_candidate(objdump_output):
     funcs = {}
     cur = None
     for line in objdump_output.splitlines():
-        m = re.match(r"[0-9a-f]+ <(func_[0-9A-F]+)>:", line)
+        m = re.match(r"[0-9a-f]+ <([A-Za-z_]\w*)>:", line)
         if m:
             cur = m.group(1)
             funcs[cur] = []

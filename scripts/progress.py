@@ -12,8 +12,8 @@ tracked src/<module>.c, the HEAD version (not the working tree, which may be a
 half-edited draft) is compiled with the real mwccpsp and compared function by
 function with scripts/mwcc_diff.py. A function is matched when it reports
 MATCH. Code sizes come from splat's `nonmatching func_X, 0xSIZE` lines, so
-asm/ must have been split (`splat split config/<module>.yaml`). The EBOOT
-(modehsys, the shared engine) is shown as one grey block until it is split.
+asm/ must have been split (`splat split config/<module>.yaml`). The EBOOT is
+the module `modehsys` (config/modehsys.yaml), the shared engine.
 
 Outputs (all committed, none contain game data):
   docs/progress/treemap.svg     the whole game, light and dark aware
@@ -37,7 +37,6 @@ OUT_DIR = ROOT / "docs/progress"
 WIBO = ROOT / "tools/wibo-bin/wibo"
 MWCC = ROOT / "tools/mwccpsp_3.0.1_219/mwccpsp.exe"
 FLAGS = ["-O4,s", "-sdatathreshold", "0"]
-EBOOT_TEXT = 0x6DE7C  # .text of the decrypted EBOOT (docs/04)
 
 README_START = "<!-- progress:start -->"
 README_END = "<!-- progress:end -->"
@@ -54,7 +53,7 @@ def functions(module):
     sizes = {}
     text = ROOT / f"asm/{module}/text.s"
     for line in text.read_text().splitlines():
-        m = re.match(r"nonmatching (func_[0-9A-F]+), 0x([0-9A-F]+)", line)
+        m = re.match(r"nonmatching (\w+), 0x([0-9A-F]+)", line)
         if m:
             sizes[m.group(1)] = int(m.group(2), 16)
     return sizes
@@ -87,7 +86,7 @@ def matched(module, tmp):
     diff = subprocess.run([sys.executable, str(ROOT / "scripts/mwcc_diff.py"),
                            str(ROOT / f"asm/{module}/text.s"), str(obj)],
                           capture_output=True, text=True, check=True).stdout
-    return set(re.findall(r"^(func_[0-9A-F]+): MATCH", diff, re.M))
+    return set(re.findall(r"^(\w+): MATCH", diff, re.M))
 
 
 # ---------------------------------------------------------------- layout
@@ -241,7 +240,7 @@ def main():
     data = {"modules": {}}
     with tempfile.TemporaryDirectory(prefix="tf5progress") as t:
         tmp = Path(t)
-        for text in sorted((ROOT / "asm").glob("rel_*/text.s")):
+        for text in sorted([*(ROOT / "asm").glob("rel_*/text.s"), ROOT / "asm/modehsys/text.s"]):
             mod = text.parent.name
             sizes = functions(mod)
             ok = matched(mod, tmp) & set(sizes)
@@ -254,8 +253,6 @@ def main():
                 "function_sizes": sizes if ok else {},
             }
             print(f"{mod:20s} {len(ok):5d}/{len(sizes):<5d}", file=sys.stderr)
-    data["modules"]["EBOOT (modehsys)"] = {"functions": 0, "bytes": EBOOT_TEXT, "matched_functions": 0,
-                                           "matched_bytes": 0, "matched": [], "function_sizes": {}}
     mods = data["modules"].values()
     data["total_bytes"] = sum(m["bytes"] for m in mods)
     data["matched_bytes"] = sum(m["matched_bytes"] for m in mods)

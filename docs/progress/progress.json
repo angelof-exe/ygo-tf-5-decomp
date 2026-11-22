@@ -1,10 +1,17 @@
 {
- "total_bytes": 5676912,
- "matched_bytes": 74472,
- "total_functions": 14083,
- "matched_functions": 300,
+ "total_bytes": 5676900,
+ "matched_bytes": 76024,
+ "total_functions": 16809,
+ "matched_functions": 301,
  "complete_modules": 6,
  "modules": {
+  "modehsys": {
+   "functions": 2726,
+   "bytes": 450160,
+   "matched_functions": 0,
+   "matched_bytes": 0,
+   "matched": []
+  },
   "rel_cardalbum": {
    "functions": 82,
    "bytes": 28340,
@@ -22,8 +29,8 @@
   "rel_conv_machine": {
    "functions": 62,
    "bytes": 13996,
-   "matched_functions": 59,
-   "matched_bytes": 11700,
+   "matched_functions": 60,
+   "matched_bytes": 13252,
    "matched": [
     "func_00000000",
     "func_00000010",
@@ -52,6 +59,7 @@
     "func_00001854",
     "func_000018B8",
     "func_000018C8",
+    "func_000018D8",
     "func_00001EE8",
     "func_00001F98",
     "func_00002154",
@@ -509,13 +517,6 @@
     "func_000038D0",
     "func_00003970"
    ]
-  },
-  "EBOOT (modehsys)": {
-   "functions": 0,
-   "bytes": 450172,
-   "matched_functions": 0,
-   "matched_bytes": 0,
-   "matched": []
   }
  }
 }
