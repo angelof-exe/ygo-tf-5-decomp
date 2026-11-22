@@ -1,0 +1,86 @@
+// Hand-written symbol names for rel_cardalbum - merged into the generated
+// rel_cardalbum.txt by scripts/resolve_nids.py, which never overwrites this file.
+//
+// Convention: s_ = read-only string/table in .data, g_ = mutable global,
+// k_ = read-only non-string constant. splat parses everything after `//` on a
+// symbol line as attributes, so descriptions go on their own comment line.
+// Evidence for every name: src/rel_cardalbum.c and docs/modules/rel_cardalbum.md.
+
+// pi/2, pi, 2 pi, -pi, 2 degrees: card zoom easing and rotation (func_00005744, func_00005AB8)
+k_half_pi = 0x0000C154; // type:f32 size:0x4
+k_pi = 0x0000C158; // type:f32 size:0x4
+k_two_pi = 0x0000C15C; // type:f32 size:0x4
+k_minus_pi = 0x0000C160; // type:f32 size:0x4
+k_rot_step = 0x0000C164; // type:f32 size:0x4
+// exported variable of libcardalbum_rel (module_sdk_version), value 0x06020010
+module_sdk_version = 0x0000C170; // type:u32 size:0x4
+// hand cursor position per grid cell, 8-byte {u16 x, pad, u16 y, pad} (func_00000414)
+k_hand_pos = 0x0000C198; // size:0x90
+// hand x per bottom button (func_00000414)
+k_hand_btn_x = 0x0000C228; // size:0xC
+// hand animation frames (func_00000414)
+k_hand_anim = 0x0000C234; // size:0xA
+// {'/', 0} and {'0', 0}: page counter glyph templates (func_000008B8, func_00000AA0)
+k_slash_glyph = 0x0000C240; // size:0x4
+k_digit_glyph = 0x0000C244; // size:0x4
+// letter-jump grids: 10x5 kana groups (Japanese), 7x4 Latin groups (func_000013AC)
+k_jump_grid_jp = 0x0000C248; // size:0x34
+k_jump_grid_latin = 0x0000C27C; // size:0x1C
+// page model animations {u16 model; f32 start, end; u8 next} (func_00002754)
+k_page_anims = 0x0000C2E0; // size:0x80
+// selection cursor position per card slot {x, z} (func_00002D54)
+k_slot_pos = 0x0000C360; // size:0x90
+// cards outside the regular album, -1 terminated (func_000043E8)
+k_extra_cards = 0x0000C3F0;
+// 33 x {u16 id; void *data; char *fmt; char *aux}, qsorted (func_00005C90)
+g_res_table = 0x0000C694; // size:0x210
+// 5 x {u16 id; Model *data; char *tms, *tmt, *extra} (func_000061F4)
+g_model_table = 0x0000C96C; // size:0x64
+// "database/cardalbum.ehp"
+s_archive_path = 0x0000C9D0; // type:asciz size:0x18
+// "jegfis" / "jagfisb": language letters for %c in file names (func_0000608C)
+k_lang_letters = 0x0000C9E8; // size:0x8
+k_lang_letters2 = 0x0000C9F0; // size:0x8
+// page position {x, y, z} per stack slot 0..7 (func_000065DC, func_000069B8)
+k_slot_xyz = 0x0000C9F8; // size:0x60
+// letter-jump dialog state (JumpState)
+g_jump = 0x0000CA70; // size:0x18
+// light parameters for ehsys_1C2A8EDD (func_00002044)
+g_light = 0x0000CA88; // size:0x3C
+// resource loader {ready:1, step:7; u16 picture queue[18]} (func_00005C90)
+g_loader = 0x0000CAD0; // size:0x26
+// database/cardalbum.ehp once loaded (func_00005FDC)
+g_archive = 0x0000CAF8; // type:u32 size:0x4
+g_work_buf = 0x0000CAFC; // type:u32 size:0x4
+g_pict_buf = 0x0000CB00; // type:u32 size:0x4
+// the whole module state (AlbumState in src/rel_cardalbum.c)
+g_album = 0x0000CB10; // size:0x3004
+
+// Proposed function names (NOT applied: src/rel_cardalbum.c keeps the
+// func_XXXXXXXX placeholders the tooling keys on):
+//   func_00000000 cardalbum_draw (export)     func_00006A8C cardalbum_init (export)
+//   func_00006BB4 cardalbum_update (export)   func_00000294 draw_background
+//   func_00000414 draw_hand                    func_000005DC draw_title_bar
+//   func_000008B8 draw_frame                   func_00000AA0 draw_number
+//   func_00000B4C draw_help_bar                func_00000EF4 draw_card_zoom
+//   func_000013AC jump_open                    func_00001708 jump_close
+//   func_00001774 jump_update                  func_00001C74 jump_draw_cb
+//   func_00001FD0 find_group_start             func_00002044 setup_3d
+//   func_000023E8 begin_3d_pass                func_000026E0 build_album
+//   func_00002754 page_set_anim                func_000029D8 draw_cover
+//   func_00002B68 draw_pages                   func_00002BE4 draw_page
+//   func_00002D54 draw_cursor                  func_00002E44 page_mesh_cb
+//   func_00003010 browse_update                func_000031C4 browse_grid
+//   func_00003434 browse_arrows                func_00003678 browse_buttons
+//   func_000038C8 queue_pictures               func_00003AB4 page_under_cursor
+//   func_00003AE8 card_under_cursor            func_00003B6C index_under_cursor
+//   func_00003C5C turn_back                    func_00003D90 turn_forward
+//   func_00003EE4 turn_update                  func_00004488 build_card_list
+//   func_00004690 goto_index                   func_000048BC zoom_mode_update
+//   func_00004A54 turn_accelerate              func_00004D64 find_group_step
+//   func_00005330 jpeg_open                    func_0000541C jpeg_close
+//   func_000055B8 jpeg_decode                  func_00005744 zoom_update
+//   func_00005AB8 zoom_anim                    func_00005D10 loader_step
+//   func_00005FDC get_archive                  func_0000608C get_resource
+//   func_000061F4 get_model                    func_000063F4 bsearch_id
+//   func_000065DC page_create                  func_00006D78 unload_step

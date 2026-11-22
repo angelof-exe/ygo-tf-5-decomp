@@ -122,3 +122,50 @@ Globals referenced by the code: 89 distinct symbols, 46 of them past the end of 
 3. verify with `scripts/mwcc_build.sh` + `scripts/mwcc_diff.py` (MWCC 1.3 SP7, `-O4,s -sdatathreshold 0`)
 4. read `src/rel_movie_viewer.c` and `src/rel_html_view.c` headers first — every
    MWCC codegen lever found so far is documented there.
+
+## Decompilation status (src/rel_cardalbum.c)
+
+81 of 82 functions match byte for byte (`scripts/mwcc_diff.py`). The odd one
+out, `func_00004D64` (previous/next name-initial group), has the right size
+and control flow but a permutation of `$s1`..`$s3`; it is the only
+difference left in `make MODULE=rel_cardalbum SRC=1` (58 bytes, all inside
+it). Layout of `.text`, the three jump tables and the `.rodata` shim between
+them are correct.
+
+### How the module works
+
+- Exports: `func_00000000` draw, `func_00006A8C(arg, heap)` init (creates a
+  10 MB heap from a memory block when `heap` is 0), `func_00006BB4` update
+  (returns 1 to exit). Modes: 0 load, 1 fade in, 2 open the cover, 3 browse,
+  4 page turn, 5 letter-jump dialog, 6 card zoom, 7 idle, 8 unload.
+- `func_00004488` builds the album: card ids 0xE10..0x23FE are ordered by
+  `ehsys_93EACD81(id)` (position in name order), filtered by
+  `ehsys_28F7224B` (valid) and `ehsys_67312719` (excluded), and each gets a
+  slot that holds the id when `ehsys_7B47DFE9(id)` (owned) or 0. The cards
+  of the list at 0xC3F0 go to an extra part after the last page, owned ones
+  only. The completion shown in the title bar is owned * 1000 / slots.
+- Pages are 0xC0-byte nodes in a depth-sorted doubly linked list; each has
+  a private copy of a page model whose 18 card meshes (0x12..0x23) are
+  textured by the mesh callback `func_00002E44` from the card-picture
+  archive (`ehsys_B8DDA661` = picture loaded?, `ehsys_F96953BE` = request
+  it). Pictures are queued per frame by `func_000038C8`/`func_000064C0`.
+- The card zoom decodes the card's JPEG with sceJpeg
+  (`ehsys_8C5B148E(handle, card, sub)` returns the JPEG data,
+  `ehsys_C01F381E` its size) into a 256x256 texture drawn on a 9x9 mesh.
+
+### Engine imports identified here (shared by all modules)
+
+- `ehsys_E60D8E10()` — number of name-initial groups (EBOOT: returns the
+  count word of the table at *0x160320).
+- `ehsys_4786AAF9(g)` — first card of group g; `ehsys_35D67398(g)` — the
+  group's glyph (u16 char code, drawn as a 1-char string).
+- `ehsys_4E722BBD(card)`, `ehsys_5471DB90(card)` — group of a card (both
+  scan the group table comparing `ehsys_93EACD81` positions).
+- `ehsys_93EACD81(card)` — 1-based position of the card in name order
+  (0 = not listed).
+- `ehsys_7B47DFE9(card)` — card is owned; `ehsys_67312719(card)` — card is
+  excluded from the album.
+- `ehsys_8C5B148E(handle, card, ehsys_B401BB25(card))` returns the card's
+  JPEG picture from an archive handle here; rel_password calls the same
+  function after a successful password, so "give card" there may really be
+  "load card data" — worth re-checking.
